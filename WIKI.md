@@ -1,3 +1,22 @@
+# ⭐ Page Contents
+
+- [Usage](#usage)
+	- [-h, --help](#h-help)
+	- [-p, --prompt](#p-prompt-prompt)
+	- [-pp, --prompt-position](#pp-prompt-position-top-entry-hidden)
+	- [-ph, --placeholder](#ph-placeholder-placeholder)
+	- [-s, --script](#s-script)
+	- [--provider](#provider)
+	- [--field](#field)
+	- [-d, --dmenu](#d-dmenu)
+	- [-w, --width](#w-width)
+	- [-gc, --gen-config](#gc-gen-config)
+	- [-gt, --gen-theme](#gt-gen-theme)
+- [Keyboard Controls](#keyboard-controls)
+
+
+---
+
 # ⭐ Usage
 
 ### 🧩 Normal application launcher
@@ -23,7 +42,7 @@ smilemenu -p "Apps"
 ```
 
 
-### 🧩`-pp, --prompt-position {top,entry,hidden}`
+### 🧩 `-pp, --prompt-position {top,entry,hidden}`
 
 Positions the prompt text. Entry by default.
 

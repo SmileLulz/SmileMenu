@@ -11,8 +11,7 @@ DEFAULT_CONFIG = {
     "window_width": 500,
     "min_visible_items": 4,
     "max_visible_items": 6,
-    "fuzzy_search": True,
-    "auto_select_first": True
+    "fuzzy_search": True
 }
 
 

@@ -12,18 +12,34 @@ SmileMenu is a lightweight launcher. It supports desktop applications, custom sc
 
 ### Features
 
-* Native Qt/QML interface
-* Wayland layer-shell support
-* Desktop application launcher
-* Fuzzy searching
-* Application category searching
-* Application history
-* Custom script runners
-* Provider system (`list` / `run`)
-* dmenu-compatible mode
-* Configurable prompts
-* Dynamic window sizing
-* JSON configuration & theming
+- Native Qt/QML interface
+- Wayland layer-shell support
+- Desktop application launcher
+- Fuzzy searching
+- Application category searching
+- Application history
+- Custom script runners
+- Provider system (`list` / `run`)
+- dmenu-compatible mode
+- Configurable prompts
+- Dynamic window sizing
+- JSON configuration & theming
+
+
+---
+
+# 🏞️ Screenshots
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="0-Screenshots/0.png" alt="Screenshot 0" width="300"/>
+    </td>
+    <td align="center">
+      <img src="0-Screenshots/1.png" alt="Screenshot 1" width="300"/>
+    </td>
+  </tr>
+</table>
 
 
 ---

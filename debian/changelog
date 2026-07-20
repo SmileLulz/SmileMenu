@@ -1,5 +1,17 @@
+smilemenu (1.1.0-1) unstable; urgency=medium
+
+  * Version bump to 1.1.0
+
+ -- SmileLulz <SmileLulz@noreply.codeberg.org>  Tue, 21 Jul 2026 03:21:10 +0530
+
+smilemenu (1.0.3-1) unstable; urgency=medium
+
+  * Version bump to 1.0.3
+
+ -- SmileLulz <SmileLulz@noreply.codeberg.org>  Tue, 21 Jul 2026 02:59:20 +0530
+
 smilemenu (1.0.0-1) unstable; urgency=medium
 
   Initial release.
 
- -- SmileLulz <>  Tue, 21 Jul 2026 02:02:44 +0530
+ -- SmileLulz <SmileLulz@noreply.codeberg.org>  Tue, 21 Jul 2026 02:11:29 +0530

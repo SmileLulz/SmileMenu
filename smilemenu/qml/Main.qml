@@ -137,22 +137,14 @@ Window {
                     onTextChanged: {
                         if (launcher) {
                             launcher.search(text)
-                            if (launcher.auto_select_first) {
-                                list.currentIndex = 0
-                            } else {
-                                list.currentIndex = -1
-                            }
+                            list.currentIndex = 0
                             list.hoveredIndex = -1
                         }
                     }
 
                     Keys.onDownPressed: {
                         if (list.count > 0) {
-                            if (list.currentIndex < list.count - 1) {
-                                list.currentIndex = Math.min(list.count - 1, list.currentIndex + 1)
-                            } else if (list.currentIndex === -1) {
-                                list.currentIndex = 0
-                            }
+                            list.currentIndex = Math.min(list.count - 1, list.currentIndex + 1)
                             list.positionViewAtIndex(list.currentIndex, ListView.Contain)
                             list.hoveredIndex = -1
                         }
@@ -160,11 +152,7 @@ Window {
 
                     Keys.onUpPressed: {
                         if (list.count > 0) {
-                            if (list.currentIndex > 0) {
-                                list.currentIndex = Math.max(0, list.currentIndex - 1)
-                            } else if (list.currentIndex === 0) {
-                                list.currentIndex = -1
-                            }
+                            list.currentIndex = Math.max(0, list.currentIndex - 1)
                             list.positionViewAtIndex(list.currentIndex, ListView.Contain)
                             list.hoveredIndex = -1
                         }
@@ -203,7 +191,7 @@ Window {
                 ListView {
                     id: list
                     model: launcher ? launcher.apps : []
-                    currentIndex: -1
+                    currentIndex: 0
                     spacing: root.item_spacing
                     anchors.fill: parent
                     clip: true
@@ -223,18 +211,6 @@ Window {
                     }
 
                     property int hoveredIndex: -1
-
-                    Component.onCompleted: {
-                        if (launcher && launcher.auto_select_first && list.count > 0) {
-                            list.currentIndex = 0
-                        }
-                    }
-
-                    onCountChanged: {
-                        if (launcher && launcher.auto_select_first && list.count > 0 && list.currentIndex === -1) {
-                            list.currentIndex = 0
-                        }
-                    }
 
                     delegate: Rectangle {
                         id: item

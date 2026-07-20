@@ -1,21 +1,27 @@
 {
   "window_radius": 40,
-  "background_color": "{{ colors.surface.default.hex }}",
+  "background_color": "{{ colors.on_secondary_fixed.default.hex }}",
+
   "item_spacing": 0,
   "item_radius_high": 28,
   "item_radius_low": 0,
   "item_color": "transparent",
-  "item_hover_color": "{{ colors.surface_container_high.default.hex }}",
-  "item_container_color": "{{ colors.surface_container.default.hex }}",
+  "item_hover_color": "{{ colors.secondary_container.default.hex }}",
+  "item_container_color": "{{ colors.on_secondary.default.hex }}",
+
   "item_height": 50,
   "item_height_description": 65,
+
   "content_margins": 28,
   "content_spacing": 10,
+
   "text_color": "{{ colors.on_surface.default.hex }}",
   "text_color_secondary": "{{ colors.on_surface_variant.default.hex }}",
+
   "font_size": 16,
   "font_size_secondary": 12,
   "font_bold": false,
+
   "text_field_placeholder_color": "{{ colors.outline.default.hex }}",
   "text_field_color": "transparent",
   "text_field_border_color": "transparent",

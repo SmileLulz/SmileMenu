@@ -100,10 +100,6 @@ class LauncherModel(QObject):
     def max_visible_items(self):
         return self.config.get("max_visible_items", 6)
 
-    @Property(bool, constant=True)
-    def auto_select_first(self):
-        return self.config.get("auto_select_first", True)
-
     def apply_history(self, apps):
         frequent = []
         others = []

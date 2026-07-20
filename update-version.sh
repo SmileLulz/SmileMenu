@@ -5,9 +5,11 @@ set -e
 PYPROJECT="pyproject.toml"
 PKGBUILD="PKGBUILD"
 CHANGELOG="debian/changelog"
+CONTROL="debian/control"
 
-CHANGELOG_MAINTAINER="SmileLulz <>"
+CHANGELOG_MAINTAINER="SmileLulz <SmileLulz@noreply.codeberg.org>"
 PKGBUILD_MAINTAINER="SmileLulz <smilelulz@noreply.codeberg.org>"
+CONTROL_MAINTAINER="SmileLulz <SmileLulz@noreply.codeberg.org>"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -59,6 +61,10 @@ update_files() {
         sed -i "s/^# Maintainer:.*/# Maintainer: ${PKGBUILD_MAINTAINER}/" "$PKGBUILD"
     fi
 
+    if grep -q '^Maintainer:' "$CONTROL"; then
+        sed -i "s/^Maintainer:.*/Maintainer: ${CONTROL_MAINTAINER}/" "$CONTROL"
+    fi
+
     local new_entry="${pkgname} (${full_version}) unstable; urgency=medium
 
   * Version bump to ${new_version}
@@ -70,6 +76,7 @@ update_files() {
 
     echo -e "${GREEN}✓ Updated pyproject.toml${NC}"
     echo -e "${GREEN}✓ Updated PKGBUILD${NC}"
+    echo -e "${GREEN}✓ Updated debian/control${NC}"
     echo -e "${GREEN}✓ Updated debian/changelog${NC}"
 }
 
