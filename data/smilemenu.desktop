@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=SmileMenu
+Comment=A lightweight Qt launcher
+Exec=smilemenu
+Icon=smilemenu
+Terminal=false
+Type=Application
+Categories=Utility;

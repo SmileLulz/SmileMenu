@@ -1,0 +1,3 @@
+[templates.smilemenu]
+input_path = "path/to/template.json"
+output_path = "~/.config/smilemenu/theme.json"

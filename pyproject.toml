@@ -1,0 +1,32 @@
+[build-system]
+requires = [
+    "setuptools",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "smilemenu"
+version = "1.0.0"
+description = "A modern Qt launcher for Linux"
+requires-python = ">=3.11"
+
+dependencies = [
+    "PySide6"
+]
+
+
+[project.scripts]
+smilemenu = "smilemenu.main:main"
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["smilemenu*"]
+
+
+[tool.setuptools.package-data]
+smilemenu = [
+    "qml/*.qml"
+]
