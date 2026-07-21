@@ -9,7 +9,7 @@ DEFAULT_CONFIG = {
     "history_limit": 3,
     "prompt_position": "entry",
     "window_width": 500,
-    "min_visible_items": 4,
+    "min_visible_items": 1,
     "max_visible_items": 6,
     "fuzzy_search": True
 }

@@ -1,1 +1,15 @@
+# Minor
+
+- None
+
+
+# Major
+
+- Add image mode
 - Design an icon
+
+
+# Latest changelog
+
+- Fixed apps not showing due to history bug
+- Prevent opening more than one window

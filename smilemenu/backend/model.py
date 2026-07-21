@@ -58,9 +58,12 @@ class LauncherModel(QObject):
         self.prompt = prompt
         self.prompt_position = prompt_position
 
-        self.history_limit = history_limit
+        if config and "history_limit" in config:
+            self._history_limit = config["history_limit"]
+        else:
+            self._history_limit = history_limit
+        
         self.history = load_history()
-
         self.config = config or {}
 
         self._all_apps = []
@@ -94,11 +97,15 @@ class LauncherModel(QObject):
 
     @Property(int, constant=True)
     def min_visible_items(self):
-        return self.config.get("min_visible_items", 4)
+        return self.config.get("min_visible_items", 1)
 
     @Property(int, constant=True)
     def max_visible_items(self):
         return self.config.get("max_visible_items", 6)
+
+    @Property(int, constant=True)
+    def history_limit(self):
+        return self._history_limit
 
     def apply_history(self, apps):
         frequent = []
@@ -112,8 +119,11 @@ class LauncherModel(QObject):
                 others.append(app)
 
         frequent.sort(key=lambda x: x[0], reverse=True)
-
-        return [app for _, app in frequent[:self.history_limit]] + others
+        top_frequent = [app for _, app in frequent[:self._history_limit]]
+        remaining_frequent = [app for _, app in frequent[self._history_limit:]]
+        all_others = sorted(remaining_frequent + others, key=lambda x: x["name"].lower())
+        
+        return top_frequent + all_others
 
     def _filter_apps(self):
         if self._search_text:

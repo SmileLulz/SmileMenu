@@ -12,15 +12,16 @@ from .backend.config import (load_config, save_config, DEFAULT_CONFIG, CONFIG_FI
 from .backend.theme import (load_theme, save_theme, DEFAULT_THEME, THEME_FILE)
 from .backend.icon_provider import IconProvider
 from .backend.model import LauncherModel
+from .backend.lock import SingleInstanceLock
 
 
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-s", "--script")
     parser.add_argument("-p", "--prompt", default="")
     parser.add_argument("-pp", "--prompt-position", choices=["top", "entry", "hidden"], default="entry")
     parser.add_argument("-ph", "--placeholder", default="Search...")
+    parser.add_argument("-s", "--script")
     parser.add_argument("--provider")
     parser.add_argument("--field", action="append", default=[])
     parser.add_argument("-d", "--dmenu", action="store_true")
@@ -48,6 +49,11 @@ def main():
         print("Generated theme:", THEME_FILE)
         return 0
 
+    lock = SingleInstanceLock()
+    if not lock.try_lock():
+        print("SmileMenu is already running")
+        return 0
+
     config = load_config()
     
     if args.width is not None:
@@ -58,17 +64,20 @@ def main():
     app = QGuiApplication(sys.argv)
     app.setApplicationName("smilemenu")
 
+    # Release lock when app exits
+    app.aboutToQuit.connect(lock.release)
+
     engine = QQmlApplicationEngine()
     engine.addImageProvider("icons", IconProvider())
     engine.rootContext().setContextProperty("theme", theme)
 
     launcher = LauncherModel(
-        dmenu_mode=args.dmenu,
+        prompt=args.prompt,
+        prompt_position=args.prompt_position,
         script=args.script,
         provider=args.provider,
         fields=args.field,
-        prompt=args.prompt,
-        prompt_position=args.prompt_position,
+        dmenu_mode=args.dmenu,
         history_limit=config["history_limit"],
         config=config
     )
@@ -80,6 +89,7 @@ def main():
     engine.load(QUrl.fromLocalFile(str(qml_file)))
 
     if not engine.rootObjects():
+        lock.release()
         return 1
 
     return app.exec()

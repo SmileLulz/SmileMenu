@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 WALLPAPER_DIR="$HOME/.wallpapers"
 
@@ -9,11 +9,13 @@ list)
         -maxdepth 1 \
         -type f \
         \( -iname "*.png" -o -iname "*.jpg" \) \
-        -printf "%f\n"
+        -printf "%p\n"
 ;;
 
 run)
-    awww img "$WALLPAPER_DIR/$2"
+    # awww img "$2" --transition-type any --transition-step 128 --transition-fps 75
+    # notify-send -h boolean:transient:true "Theme applied" "Wallpaper and theme updated successfully!"
+    echo "Selected: $2"
 ;;
 
 esac
