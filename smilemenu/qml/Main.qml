@@ -13,6 +13,8 @@ Window {
     property real window_radius: theme ? theme.window_radius : 40
     property color background_color: theme ? theme.background_color : "#303446"
 
+    property bool show_text_field: launcher ? launcher.show_text_field : true
+
     property real item_spacing: theme ? theme.item_spacing : 0
     property real item_radius_high: theme ? theme.item_radius_high : 28
     property real item_radius_low: theme ? theme.item_radius_low : 0
@@ -26,7 +28,7 @@ Window {
     property int max_visible_items: launcher ? launcher.max_visible_items : 6
 
     property int content_margins: theme ? theme.content_margins : 28
-    property int content_spacing: theme ? theme.content_spacing : 10
+    property int content_spacing: theme ? theme.content_spacing : 14
 
     property color text_color: theme ? theme.text_color : "#c6d0f5"
     property color text_color_secondary: theme ? theme.text_color_secondary : "#949cbb"
@@ -46,14 +48,32 @@ Window {
     width: launcher ? launcher.window_width : 500
     height: {
         var count = launcher ? launcher.apps.length : 0
-        var visibleItems = Math.max(min_visible_items, Math.min(count, max_visible_items))
-        return (
-            content_margins * 2 +
-            50 +
-            content_spacing +
+
+        var visibleItems = Math.max(
+            min_visible_items,
+            Math.min(count, max_visible_items)
+        )
+
+        var height = content_margins * 2
+        var hasTopPrompt = root.prompt_exists && root.prompt_text === "top"
+        var hasEntryPrompt = root.prompt_exists && root.prompt_text === "entry"
+
+        if (hasTopPrompt) {
+            height += 30
+            height += content_spacing
+        }
+
+        if (root.show_text_field || hasEntryPrompt) {
+            height += 50
+            height += content_spacing
+        }
+
+        height += (
             visibleItems * item_height +
             Math.max(0, visibleItems - 1) * item_spacing
         )
+
+        return height
     }
 
     LayerShellQt.Window.layer: LayerShellQt.Window.LayerOverlay
@@ -63,6 +83,53 @@ Window {
 
     readonly property bool prompt_exists: launcher && launcher.prompt_text !== ""
     readonly property string prompt_text: prompt_exists ? launcher.prompt_position_text : ""
+
+
+    FocusScope {
+        id: keyboardFocus
+        anchors.fill: parent
+        focus: true
+
+        Keys.onDownPressed: {
+            if (list.count > 0) {
+                list.currentIndex = Math.min(
+                    list.count - 1,
+                    list.currentIndex + 1
+                )
+
+                list.positionViewAtIndex(
+                    list.currentIndex,
+                    ListView.Contain
+                )
+            }
+        }
+
+        Keys.onUpPressed: {
+            if (list.count > 0) {
+                list.currentIndex = Math.max(
+                    0,
+                    list.currentIndex - 1
+                )
+
+                list.positionViewAtIndex(
+                    list.currentIndex,
+                    ListView.Contain
+                )
+            }
+        }
+
+        Keys.onReturnPressed: {
+            if (list.currentItem) {
+                launcher.launch(list.currentItem.command)
+                root.closeAnimated()
+            }
+        }
+
+        Keys.onEscapePressed: {
+            root.closeAnimated()
+        }
+    }
+
 
     Rectangle {
         id: container
@@ -100,9 +167,10 @@ Window {
             }
 
             RowLayout {
-                width: parent.width
-                height: 50
                 spacing: 10
+                width: parent.width
+                height: visible ? 50 : 0
+                visible: root.show_text_field || (root.prompt_exists && root.prompt_text === "entry")
 
                 Loader {
                     id: promptLoader
@@ -120,6 +188,9 @@ Window {
                     id: search
                     Layout.fillWidth: true
                     Layout.preferredHeight: 50
+                    Keys.forwardTo: [keyboardFocus]
+                    visible: root.show_text_field
+                    enabled: root.show_text_field
                     focus: true
                     placeholderText: customPlaceholder ? customPlaceholder : "Search..."
                     color: root.text_color
@@ -140,33 +211,6 @@ Window {
                             list.currentIndex = 0
                             list.hoveredIndex = -1
                         }
-                    }
-
-                    Keys.onDownPressed: {
-                        if (list.count > 0) {
-                            list.currentIndex = Math.min(list.count - 1, list.currentIndex + 1)
-                            list.positionViewAtIndex(list.currentIndex, ListView.Contain)
-                            list.hoveredIndex = -1
-                        }
-                    }
-
-                    Keys.onUpPressed: {
-                        if (list.count > 0) {
-                            list.currentIndex = Math.max(0, list.currentIndex - 1)
-                            list.positionViewAtIndex(list.currentIndex, ListView.Contain)
-                            list.hoveredIndex = -1
-                        }
-                    }
-
-                    Keys.onReturnPressed: {
-                        if (list.currentItem) {
-                            launcher.launch(list.currentItem.command)
-                            root.closeAnimated()
-                        }
-                    }
-
-                    Keys.onEscapePressed: {
-                        root.closeAnimated()
                     }
                 }
             }
@@ -302,7 +346,11 @@ Window {
         container.scale = 1
 
         Qt.callLater(function() {
-            search.forceActiveFocus()
+            keyboardFocus.forceActiveFocus()
+
+            if (root.show_text_field) {
+                search.forceActiveFocus()
+            }
         })
     }
 

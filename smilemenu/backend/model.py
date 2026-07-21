@@ -101,6 +101,10 @@ class LauncherModel(QObject):
     def max_visible_items(self):
         return self.config.get("max_visible_items", 6)
 
+    @Property(bool, constant=True)
+    def show_text_field(self):
+        return self.config.get("show_text_field", True)
+
     @Property(int, constant=True)
     def history_limit(self):
         return self._history_limit

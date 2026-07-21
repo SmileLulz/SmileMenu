@@ -10,6 +10,7 @@
 	- [-d, --dmenu](#d-dmenu)
 	- [-dc, --display-columns](#d-display-columns-column)
 	- [-w, --width](#w-width-width)
+	- [-ntf, --no-text-field](#ntf-no-text-field)
 	- [-gc, --gen-config](#gc-gen-config)
 	- [-gt, --gen-theme](#gt-gen-theme)
 - [Keyboard Controls](#keyboard-controls)
@@ -217,6 +218,16 @@ Example:
 
 ```sh
 smilemenu -w 700
+```
+
+### 🧩 `-ntf, --no-text-field`
+
+Disables text field / search box
+
+Example:
+
+```sh
+smilemenu -ntf -p "Applications"
 ```
 
 

@@ -19,7 +19,7 @@ DEFAULT_THEME = {
     "item_height_description": 65,
 
     "content_margins": 28,
-    "content_spacing": 10,
+    "content_spacing": 14,
 
     "text_color": "#c6d0f5",
     "text_color_secondary": "#949cbb",

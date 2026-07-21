@@ -26,6 +26,7 @@ def main():
     parser.add_argument("-d", "--dmenu", action="store_true")
     parser.add_argument("-dc", "--display-columns", type=str, default=None)
     parser.add_argument("-w", "--width", type=int, default=None)
+    parser.add_argument("-ntf", "--no-text-field", action="store_true")
     parser.add_argument("-gc", "--gen-config", action="store_true")
     parser.add_argument("-gt", "--gen-theme", action="store_true")
 
@@ -58,6 +59,9 @@ def main():
     
     if args.width is not None:
         config["window_width"] = args.width
+    
+    if args.no_text_field:
+        config["show_text_field"] = False
 
     theme = load_theme()
 

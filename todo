@@ -1,6 +1,6 @@
 # Minor
 
-- Add text field toggle option
+- Add config and theme override arguments
 - Add descriptions for help message
 
 
@@ -12,5 +12,4 @@
 
 # Latest changelog
 
-- Added '-dc / --display-columns'
-- Removed '-s / --script'
+- Added text field toggle option
