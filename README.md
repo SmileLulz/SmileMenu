@@ -1,6 +1,8 @@
 # ⚠️ Note First
 
-I am not willing to accept contributions. I made this project for myself, but I'm making it public, because why not. You can use it.
+I am not willing to accept contributions. I made this project for myself. I'm making it public, because why not. You can use it.
+
+Also it has few ms slow launch because the backend is written on Python.
 
 ---
 
@@ -18,7 +20,6 @@ SmileMenu is a lightweight launcher. It supports desktop applications, custom sc
 - Fuzzy searching
 - Application category searching
 - Application history
-- Custom script runners
 - Provider system (`list` / `run`)
 - dmenu-compatible mode
 - Configurable prompts
@@ -126,7 +127,7 @@ sudo pacman -S --needed python python-pip python-build python-installer python-w
 Build the package:
 
 ```sh
-makepkg -fcC
+makepkg -cfC
 ```
 
 Install locally:

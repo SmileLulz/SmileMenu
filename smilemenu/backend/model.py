@@ -1,7 +1,7 @@
 from PySide6.QtCore import QObject, Property, Signal, Slot, QProcess
 from .launcher import load_applications
 from .history import load_history, save_history
-from .providers import load_stdin, load_script, load_provider
+from .providers import load_stdin, load_provider
 from .exec_parser import build_command
 
 
@@ -40,23 +40,23 @@ class LauncherModel(QObject):
 
     def __init__(
         self,
-        dmenu_mode=False,
-        script=None,
-        provider=None,
-        fields=None,
         prompt="",
         prompt_position="entry",
+        provider=None,
+        fields=None,
+        dmenu_mode=False,
+        display_columns=None,
         history_limit=3,
         config=None
     ):
         super().__init__()
 
-        self.dmenu_mode = dmenu_mode
-        self.script = script
-        self.provider = provider
-        self.fields = fields or []
         self.prompt = prompt
         self.prompt_position = prompt_position
+        self.provider = provider
+        self.fields = fields or []
+        self.dmenu_mode = dmenu_mode
+        self.display_columns = display_columns
 
         if config and "history_limit" in config:
             self._history_limit = config["history_limit"]
@@ -74,8 +74,6 @@ class LauncherModel(QObject):
             self.reload_provider()
         elif dmenu_mode:
             self.reload_stdin()
-        elif script:
-            self.reload_script()
         else:
             self.reload()
 
@@ -163,23 +161,7 @@ class LauncherModel(QObject):
                 "description": item.description,
                 "categories": []
             }
-            for item in load_stdin()
-        ]
-
-        self._apps = self._all_apps.copy()
-        self.appsChanged.emit()
-
-    @Slot()
-    def reload_script(self):
-        self._all_apps = [
-            {
-                "name": item.name,
-                "command": item.command,
-                "icon": item.icon,
-                "description": item.description,
-                "categories": []
-            }
-            for item in load_script(self.script)
+            for item in load_stdin(self.display_columns)
         ]
 
         self._apps = self._all_apps.copy()
@@ -218,10 +200,6 @@ class LauncherModel(QObject):
 
         if self.dmenu_mode:
             print(command, flush=True)
-            return
-
-        if self.script:
-            QProcess.startDetached(self.script, [command])
             return
 
         self.update_history(command)

@@ -5,11 +5,11 @@
 	- [-p, --prompt](#p-prompt-prompt)
 	- [-pp, --prompt-position](#pp-prompt-position-top-entry-hidden)
 	- [-ph, --placeholder](#ph-placeholder-placeholder)
-	- [-s, --script](#s-script)
-	- [--provider](#provider)
-	- [--field](#field)
+	- [--provider](#provider-script)
+	- [--field](#field-field-mode)
 	- [-d, --dmenu](#d-dmenu)
-	- [-w, --width](#w-width)
+	- [-dc, --display-columns](#d-display-columns-column)
+	- [-w, --width](#w-width-width)
 	- [-gc, --gen-config](#gc-gen-config)
 	- [-gt, --gen-theme](#gt-gen-theme)
 - [Keyboard Controls](#keyboard-controls)
@@ -63,31 +63,6 @@ Example:
 
 ```sh
 smilemenu -ph "Search Apps..."
-```
-
-
-### 🧩 `-s, --script <SCRIPT>`
-
-Scripts can provide custom entries. Run a script and use its output as items. The script should output one item per line.
-
-Example:
-
-```sh
-smilemenu --script ~/.local/bin/my-menu.sh
-```
-
-Script output:
-
-```text
-Option 1
-Option 2
-Option 3
-```
-
-Selecting an item runs:
-
-```sh
-my-menu.sh "Option 1"
 ```
 
 
@@ -223,7 +198,18 @@ ls ~/Documents | smilemenu --dmenu
 ```
 
 
-### 🧩 `-w, --width <SIZE>`
+### 🧩 `-dc, --display-columns <COLUMN>`
+
+Show only selected columns from multi-column input.
+
+Example:
+
+```sh
+cliphist list | smilemenu --dmenu --display-columns 2 -ph 'Search clipboard...' | cliphist decode | wl-copy
+```
+
+
+### 🧩 `-w, --width <WIDTH>`
 
 Overrides the window width.
 

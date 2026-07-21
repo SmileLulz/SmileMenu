@@ -21,10 +21,10 @@ def main():
     parser.add_argument("-p", "--prompt", default="")
     parser.add_argument("-pp", "--prompt-position", choices=["top", "entry", "hidden"], default="entry")
     parser.add_argument("-ph", "--placeholder", default="Search...")
-    parser.add_argument("-s", "--script")
     parser.add_argument("--provider")
     parser.add_argument("--field", action="append", default=[])
     parser.add_argument("-d", "--dmenu", action="store_true")
+    parser.add_argument("-dc", "--display-columns", type=str, default=None)
     parser.add_argument("-w", "--width", type=int, default=None)
     parser.add_argument("-gc", "--gen-config", action="store_true")
     parser.add_argument("-gt", "--gen-theme", action="store_true")
@@ -64,7 +64,6 @@ def main():
     app = QGuiApplication(sys.argv)
     app.setApplicationName("smilemenu")
 
-    # Release lock when app exits
     app.aboutToQuit.connect(lock.release)
 
     engine = QQmlApplicationEngine()
@@ -74,10 +73,10 @@ def main():
     launcher = LauncherModel(
         prompt=args.prompt,
         prompt_position=args.prompt_position,
-        script=args.script,
         provider=args.provider,
         fields=args.field,
         dmenu_mode=args.dmenu,
+        display_columns=args.display_columns,
         history_limit=config["history_limit"],
         config=config
     )

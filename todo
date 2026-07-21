@@ -1,6 +1,7 @@
 # Minor
 
-- Fix WIKI.md
+- Add text field toggle option
+- Add descriptions for help message
 
 
 # Major
@@ -11,5 +12,5 @@
 
 # Latest changelog
 
-- Fixed apps not showing due to history bug
-- Prevent opening more than one window
+- Added '-dc / --display-columns'
+- Removed '-s / --script'

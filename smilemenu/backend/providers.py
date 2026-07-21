@@ -1,10 +1,9 @@
 import subprocess
 from pathlib import Path
-
 from .item import LauncherItem
 
 
-def load_stdin():
+def load_stdin(display_columns=None):
     import sys
     items = []
 
@@ -12,24 +11,7 @@ def load_stdin():
         line = line.strip()
         if not line:
             continue
-        items.append(LauncherItem(name=line, command=line))
-
-    return items
-
-
-def load_script(script):
-    items = []
-
-    try:
-        result = subprocess.run([script], capture_output=True, text=True)
-    except Exception:
-        return items
-
-    for line in result.stdout.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        items.append(LauncherItem(name=line, command=line))
+        items.append(LauncherItem(name=get_display_name(line, display_columns), command=line))
 
     return items
 
@@ -95,3 +77,21 @@ def provider_item(value, fields=None):
         icon=data["icon"],
         description=data["description"]
     )
+
+def get_display_name(value, display_columns=None):
+    if display_columns is None:
+        return value
+
+    columns = value.split("\t")
+
+    selected = []
+
+    for column in display_columns.split(","):
+        try:
+            index = int(column.strip()) - 1
+            if 0 <= index < len(columns):
+                selected.append(columns[index])
+        except ValueError:
+            continue
+
+    return "\t".join(selected)
