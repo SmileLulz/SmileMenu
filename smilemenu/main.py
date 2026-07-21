@@ -29,25 +29,37 @@ def main():
     parser.add_argument("-ntf", "--no-text-field", action="store_true")
     parser.add_argument("-gc", "--gen-config", action="store_true")
     parser.add_argument("-gt", "--gen-theme", action="store_true")
+    parser.add_argument("-c", "--config")
+    parser.add_argument("-t", "--theme")
 
     args = parser.parse_args()
 
+    config_path = (
+        Path(args.config).expanduser().resolve()
+        if args.config else CONFIG_FILE
+    )
+
+    theme_path = (
+        Path(args.theme).expanduser().resolve()
+        if args.theme else THEME_FILE
+    )
+
     if args.gen_config:
-        if CONFIG_FILE.exists():
+        if config_path.exists():
             print("Config already exists:", CONFIG_FILE)
             return 0
 
-        save_config(DEFAULT_CONFIG)
-        print("Generated config:", CONFIG_FILE)
+        save_config(DEFAULT_CONFIG, config_path)
+        print("Generated config:", config_path)
         return 0
     
     if args.gen_theme:
-        if THEME_FILE.exists():
+        if theme_path.exists():
             print("Theme already exists:", THEME_FILE)
             return 0
 
-        save_theme(DEFAULT_THEME)
-        print("Generated theme:", THEME_FILE)
+        save_theme(DEFAULT_THEME, theme_path)
+        print("Generated theme:", theme_path)
         return 0
 
     lock = SingleInstanceLock()
@@ -55,7 +67,7 @@ def main():
         print("SmileMenu is already running")
         return 0
 
-    config = load_config()
+    config = load_config(config_path)
     
     if args.width is not None:
         config["window_width"] = args.width
@@ -63,7 +75,7 @@ def main():
     if args.no_text_field:
         config["show_text_field"] = False
 
-    theme = load_theme()
+    theme = load_theme(theme_path)
 
     app = QGuiApplication(sys.argv)
     app.setApplicationName("smilemenu")

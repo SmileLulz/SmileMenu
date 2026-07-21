@@ -16,12 +16,14 @@ DEFAULT_CONFIG = {
 }
 
 
-def load_config():
-    if not CONFIG_FILE.exists():
+def load_config(path=None):
+    path = Path(path).expanduser() if path else CONFIG_FILE
+
+    if not path.exists():
         return DEFAULT_CONFIG.copy()
 
     try:
-        with CONFIG_FILE.open("r", encoding="utf-8") as file:
+        with path.open("r", encoding="utf-8") as file:
             data = json.load(file)
 
         config = DEFAULT_CONFIG.copy()
@@ -32,8 +34,10 @@ def load_config():
         return DEFAULT_CONFIG.copy()
 
 
-def save_config(config):
-    CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+def save_config(config, path=None):
+    path = Path(path).expanduser() if path else CONFIG_FILE
 
-    with CONFIG_FILE.open("w", encoding="utf-8") as file:
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with path.open("w", encoding="utf-8") as file:
         json.dump(config, file, indent=4)

@@ -13,6 +13,8 @@
 	- [-ntf, --no-text-field](#ntf-no-text-field)
 	- [-gc, --gen-config](#gc-gen-config)
 	- [-gt, --gen-theme](#gt-gen-theme)
+	- [-c, --config](#c-config-path)
+	- [-t, --theme](#t-theme-path)
 - [Keyboard Controls](#keyboard-controls)
 
 
@@ -222,7 +224,7 @@ smilemenu -w 700
 
 ### 🧩 `-ntf, --no-text-field`
 
-Disables text field / search box
+Disables text field / search box.
 
 Example:
 
@@ -233,12 +235,42 @@ smilemenu -ntf -p "Applications"
 
 ### 🧩 `-gc, --gen-config`
 
-Generates default config file (`~/.config/smilemenu/config.json`)
+Generates default config file (`~/.config/smilemenu/config.json`).
 
 
 ### 🧩 `-gc, --gen-theme`
 
-Generates default theme file (`~/.config/smilemenu/theme.json`)
+Generates default theme file (`~/.config/smilemenu/theme.json`).
+
+
+### 🧩 `-c, --config <PATH>`
+
+Overrides config file. Also can be used to generated config files with different names.
+
+Examples:
+
+```sh
+# Uses a different config file
+smilemenu -c ~/.config/smilemenu/other-config.json
+
+# Generates new.json config file
+smilemenu -gc -c ~/.config/smilemenu/new.json
+```
+
+
+### 🧩 `-t, --theme <PATH>`
+
+Overrides theme file. Also can be used to generated theme files with different names.
+
+Examples:
+
+```sh
+# Uses a different theme file
+smilemenu -c ~/.config/smilemenu/other-theme.json
+
+# Generates material.json theme file
+smilemenu -gc -c ~/.config/smilemenu/material.json
+```
 
 
 ---

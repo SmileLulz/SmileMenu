@@ -35,12 +35,14 @@ DEFAULT_THEME = {
 }
 
 
-def load_theme():
-    if not THEME_FILE.exists():
+def load_theme(path=None):
+    path = Path(path).expanduser() if path else THEME_FILE
+
+    if not path.exists():
         return DEFAULT_THEME.copy()
 
     try:
-        with THEME_FILE.open("r", encoding="utf-8") as file:
+        with path.open("r", encoding="utf-8") as file:
             data = json.load(file)
 
         theme = DEFAULT_THEME.copy()
@@ -51,8 +53,10 @@ def load_theme():
         return DEFAULT_THEME.copy()
 
 
-def save_theme(theme):
-    THEME_FILE.parent.mkdir(parents=True, exist_ok=True)
+def save_theme(theme, path=None):
+    path = Path(path).expanduser() if path else THEME_FILE
 
-    with THEME_FILE.open("w", encoding="utf-8") as file:
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with path.open("w", encoding="utf-8") as file:
         json.dump(theme, file, indent=4)

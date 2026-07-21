@@ -1,6 +1,5 @@
 # Minor
 
-- Add config and theme override arguments
 - Add descriptions for help message
 
 
@@ -10,6 +9,6 @@
 - Design an icon
 
 
-# Latest changelog
+# Latest changelog (v1.4.0)
 
-- Added text field toggle option
+- Added config and theme override arguments
