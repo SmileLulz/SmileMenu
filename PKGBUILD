@@ -1,4 +1,4 @@
-# Maintainer: SmileLulz <smilelulz@noreply.codeberg.org>
+# Maintainer: SmileLulz <SmileLulz@noreply.codeberg.org>
 
 pkgname=smilemenu
 pkgver=1.1.3

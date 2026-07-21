@@ -8,7 +8,7 @@ CHANGELOG="debian/changelog"
 CONTROL="debian/control"
 
 CHANGELOG_MAINTAINER="SmileLulz <SmileLulz@noreply.codeberg.org>"
-PKGBUILD_MAINTAINER="SmileLulz <smilelulz@noreply.codeberg.org>"
+PKGBUILD_MAINTAINER="SmileLulz <SmileLulz@noreply.codeberg.org>"
 CONTROL_MAINTAINER="SmileLulz <SmileLulz@noreply.codeberg.org>"
 
 RED='\033[0;31m'
