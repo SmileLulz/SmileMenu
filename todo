@@ -1,5 +1,6 @@
 # Minor
 
+- Switch to GTK?
 - Add descriptions for help message
 
 
@@ -9,6 +10,6 @@
 - Design an icon
 
 
-# Latest changelog (v1.4.0)
+# Latest changelog (v1.4.3)
 
-- Added config and theme override arguments
+- Optimizations

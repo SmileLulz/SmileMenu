@@ -7,11 +7,18 @@ class IconProvider(QQuickImageProvider):
 
     def __init__(self):
         super().__init__(QQuickImageProvider.Image)
-        paths = QIcon.themeSearchPaths()
-        paths.append(str(Path.home() / ".local/share/icons"))
-        QIcon.setThemeSearchPaths(paths)
+        self._initialized = False
+
+    def _ensure_initialized(self):
+        if not self._initialized:
+            paths = QIcon.themeSearchPaths()
+            paths.append(str(Path.home() / ".local/share/icons"))
+            QIcon.setThemeSearchPaths(paths)
+            self._initialized = True
 
     def requestImage(self, icon_name, size, requested_size):
+        self._ensure_initialized()
+        
         if not icon_name:
             return QIcon().pixmap(64, 64).toImage()
         

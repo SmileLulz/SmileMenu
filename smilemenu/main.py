@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
 import sys
+import time
 import argparse
 from pathlib import Path
 
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QUrl, QTimer
 
 from .backend.config import (load_config, save_config, DEFAULT_CONFIG, CONFIG_FILE)
 from .backend.theme import (load_theme, save_theme, DEFAULT_THEME, THEME_FILE)
@@ -16,6 +17,8 @@ from .backend.lock import SingleInstanceLock
 
 
 def main():
+    t0 = time.time()
+    
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-p", "--prompt", default="")
@@ -62,6 +65,9 @@ def main():
         print("Generated theme:", theme_path)
         return 0
 
+    print(f"Args parsed: {time.time() - t0:.3f}s")
+    t1 = time.time()
+
     lock = SingleInstanceLock()
     if not lock.try_lock():
         print("SmileMenu is already running")
@@ -79,6 +85,8 @@ def main():
 
     app = QGuiApplication(sys.argv)
     app.setApplicationName("smilemenu")
+    print(f"App created: {time.time() - t1:.3f}s")
+    t2 = time.time()
 
     app.aboutToQuit.connect(lock.release)
 
@@ -94,7 +102,8 @@ def main():
         dmenu_mode=args.dmenu,
         display_columns=args.display_columns,
         history_limit=config["history_limit"],
-        config=config
+        config=config,
+        lazy_load=True
     )
 
     engine.rootContext().setContextProperty("launcher", launcher)
@@ -102,10 +111,15 @@ def main():
 
     qml_file = Path(__file__).parent / "qml" / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
+    print(f"QML loaded: {time.time() - t2:.3f}s")
+    t3 = time.time()
 
     if not engine.rootObjects():
         lock.release()
         return 1
+
+    QTimer.singleShot(0, launcher.reload)
+    print(f"Window shown: {time.time() - t3:.3f}s")
 
     return app.exec()
 

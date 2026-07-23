@@ -71,8 +71,6 @@ smilemenu -ph "Search Apps..."
 
 ### 🧩 `--provider <SCRIPT>`
 
-Providers are more advanced scripts.
-
 A provider has two actions:
 
 ```

@@ -47,7 +47,8 @@ class LauncherModel(QObject):
         dmenu_mode=False,
         display_columns=None,
         history_limit=3,
-        config=None
+        config=None,
+        lazy_load=False
     ):
         super().__init__()
 
@@ -70,12 +71,16 @@ class LauncherModel(QObject):
         self._apps = []
         self._search_text = ""
 
-        if provider:
-            self.reload_provider()
-        elif dmenu_mode:
-            self.reload_stdin()
+        if not lazy_load:
+            self._load_data()
+
+    def _load_data(self):
+        if self.provider:
+            self._reload_provider()
+        elif self.dmenu_mode:
+            self._reload_stdin()
         else:
-            self.reload()
+            self._reload_applications()
 
     @Property("QVariantList", notify=appsChanged)
     def apps(self):
@@ -140,6 +145,9 @@ class LauncherModel(QObject):
 
     @Slot()
     def reload(self):
+        self._load_data()
+
+    def _reload_applications(self):
         self._all_apps = [
             {
                 "name": app.name,
@@ -155,8 +163,7 @@ class LauncherModel(QObject):
         self._all_apps = self.apply_history(self._all_apps)
         self._filter_apps()
 
-    @Slot()
-    def reload_stdin(self):
+    def _reload_stdin(self):
         self._all_apps = [
             {
                 "name": item.name,
@@ -171,8 +178,7 @@ class LauncherModel(QObject):
         self._apps = self._all_apps.copy()
         self.appsChanged.emit()
 
-    @Slot()
-    def reload_provider(self):
+    def _reload_provider(self):
         self._all_apps = [
             {
                 "name": item.name,

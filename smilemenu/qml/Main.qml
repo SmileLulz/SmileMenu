@@ -294,6 +294,7 @@ Window {
                                 anchors.verticalCenter: parent.verticalCenter
                                 fillMode: Image.PreserveAspectFit
                                 visible: modelData.icon && modelData.icon !== ""
+                                asynchronous: true
                             }
 
                             Column {
