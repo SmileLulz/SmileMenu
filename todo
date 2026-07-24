@@ -1,6 +1,5 @@
 # Minor
 
-- Switch to GTK?
 - Add descriptions for help message
 
 
@@ -12,4 +11,6 @@
 
 # Latest changelog (v1.4.3)
 
-- Optimizations
+- Removed app launch output log (it was causing not to `run` the dmenu or provider outputs)
+- Optimization fixes
+- Implemented caching
