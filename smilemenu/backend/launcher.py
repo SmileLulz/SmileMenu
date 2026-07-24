@@ -1,32 +1,30 @@
 from pathlib import Path
-
 from .desktop_entry import DesktopEntry
+from .desktop_cache import load_cache, save_cache
 
-
-def parse_desktop(path):
-    return DesktopEntry.from_file(path)
-
+DIRECTORIES = [
+    Path.home() / ".local/share/applications",
+    Path("/usr/local/share/applications"),
+    Path("/usr/share/applications"),
+]
 
 def load_applications():
-    paths = [
-        Path.home() / ".local/share/applications",
-        Path("/usr/local/share/applications"),
-        Path("/usr/share/applications"),
-    ]
+    cached, valid = load_cache(DIRECTORIES)
+    if valid:
+        return cached
 
     apps = {}
-
-    for directory in paths:
+    for directory in DIRECTORIES:
         if not directory.exists():
             continue
-
         for desktop in directory.glob("*.desktop"):
-            item = parse_desktop(desktop)
+            item = DesktopEntry.from_file(desktop)
+            if item:
+                apps[desktop.name] = item
 
-            if not item:
-                continue
-
-            desktop_id = desktop.name
-            apps[desktop_id] = item
-
-    return list(apps.values())
+    all_items = list(apps.values())
+    try:
+        save_cache(DIRECTORIES, all_items)
+    except Exception:
+        pass
+    return all_items

@@ -1,39 +1,45 @@
 from PySide6.QtQuick import QQuickImageProvider
 from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtCore import QSize
 from pathlib import Path
 
-
 class IconProvider(QQuickImageProvider):
-
     def __init__(self):
         super().__init__(QQuickImageProvider.Image)
-        self._initialized = False
-
-    def _ensure_initialized(self):
-        if not self._initialized:
-            paths = QIcon.themeSearchPaths()
-            paths.append(str(Path.home() / ".local/share/icons"))
-            QIcon.setThemeSearchPaths(paths)
-            self._initialized = True
+        paths = QIcon.themeSearchPaths()
+        paths.append(str(Path.home() / ".local/share/icons"))
+        QIcon.setThemeSearchPaths(paths)
+        self._cache = {}
 
     def requestImage(self, icon_name, size, requested_size):
-        self._ensure_initialized()
-        
         if not icon_name:
             return QIcon().pixmap(64, 64).toImage()
-        
-        for ext in ["", ".png", ".svg", ".jpg", ".jpeg", ".xpm"]:
+
+        key = (icon_name, 64, 64)
+        if key in self._cache:
+            return self._cache[key]
+
+        for ext in ("", ".png", ".svg", ".jpg", ".jpeg", ".xpm"):
             icon_path = Path.home() / ".local/share/icons" / f"{icon_name}{ext}"
             if icon_path.exists():
                 pixmap = QPixmap(str(icon_path))
                 if not pixmap.isNull():
-                    return pixmap.scaled(64, 64).toImage()
-        
+                    img = pixmap.scaled(64, 64).toImage()
+                    self._cache[key] = img
+                    return img
+
         icon = QIcon.fromTheme(icon_name)
         if not icon.isNull():
-            return icon.pixmap(64, 64).toImage()
-        
-        icon = QIcon.fromTheme("application-x-executable")
-        if icon.isNull():
-            return QIcon().pixmap(64, 64).toImage()
-        return icon.pixmap(64, 64).toImage()
+            pixmap = icon.pixmap(QSize(64, 64))
+            if not pixmap.isNull():
+                img = pixmap.toImage()
+                self._cache[key] = img
+                return img
+
+        fallback = QIcon.fromTheme("application-x-executable")
+        if fallback.isNull():
+            fallback = QIcon()
+        pixmap = fallback.pixmap(64, 64)
+        img = pixmap.toImage()
+        self._cache[key] = img
+        return img

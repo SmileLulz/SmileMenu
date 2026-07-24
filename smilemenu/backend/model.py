@@ -4,83 +4,53 @@ from .history import load_history, save_history
 from .providers import load_stdin, load_provider
 from .exec_parser import build_command
 
-
 def fuzzy_match(query, text):
     query = query.lower()
     text = text.lower()
-
     if not query:
         return True
-
     index = 0
     for char in text:
         if index < len(query) and char == query[index]:
             index += 1
-
     return index == len(query)
-
 
 def match_app(query, app):
     if not query:
         return True
-    
     if fuzzy_match(query, app["name"]):
         return True
-    
-    categories = app.get("categories", [])
-    for category in categories:
+    for category in app.get("categories", []):
         if fuzzy_match(query, category):
             return True
-    
     return False
-
 
 class LauncherModel(QObject):
     appsChanged = Signal()
 
-    def __init__(
-        self,
-        prompt="",
-        prompt_position="entry",
-        provider=None,
-        fields=None,
-        dmenu_mode=False,
-        display_columns=None,
-        history_limit=3,
-        config=None,
-        lazy_load=False
-    ):
+    def __init__(self, prompt="", prompt_position="entry", provider=None,
+                 fields=None, dmenu_mode=False, display_columns=None,
+                 history_limit=3, config=None):
         super().__init__()
-
         self.prompt = prompt
         self.prompt_position = prompt_position
         self.provider = provider
         self.fields = fields or []
         self.dmenu_mode = dmenu_mode
         self.display_columns = display_columns
-
-        if config and "history_limit" in config:
-            self._history_limit = config["history_limit"]
-        else:
-            self._history_limit = history_limit
-        
+        self._history_limit = (config or {}).get("history_limit", history_limit)
         self.history = load_history()
         self.config = config or {}
-
         self._all_apps = []
         self._apps = []
         self._search_text = ""
 
-        if not lazy_load:
-            self._load_data()
-
-    def _load_data(self):
-        if self.provider:
-            self._reload_provider()
-        elif self.dmenu_mode:
-            self._reload_stdin()
+        if provider:
+            self.reload_provider()
+        elif dmenu_mode:
+            self.reload_stdin()
         else:
-            self._reload_applications()
+            self.reload()
 
     @Property("QVariantList", notify=appsChanged)
     def apps(self):
@@ -93,7 +63,7 @@ class LauncherModel(QObject):
     @Property(str, constant=True)
     def prompt_position_text(self):
         return self.prompt_position
-    
+
     @Property(int, constant=True)
     def window_width(self):
         return self.config.get("window_width", 500)
@@ -115,81 +85,60 @@ class LauncherModel(QObject):
         return self._history_limit
 
     def apply_history(self, apps):
-        frequent = []
-        others = []
-
+        frequent, others = [], []
         for app in apps:
             score = self.history.get(app["command"], 0)
             if score > 0:
                 frequent.append((score, app))
             else:
                 others.append(app)
-
         frequent.sort(key=lambda x: x[0], reverse=True)
-        top_frequent = [app for _, app in frequent[:self._history_limit]]
-        remaining_frequent = [app for _, app in frequent[self._history_limit:]]
-        all_others = sorted(remaining_frequent + others, key=lambda x: x["name"].lower())
-        
-        return top_frequent + all_others
+        top = [app for _, app in frequent[:self._history_limit]]
+        rest = [app for _, app in frequent[self._history_limit:]]
+        rest_sorted = sorted(rest + others, key=lambda x: x["name"].lower())
+        return top + rest_sorted
 
     def _filter_apps(self):
         if self._search_text:
-            self._apps = [
-                app for app in self._all_apps
-                if match_app(self._search_text, app)
-            ]
+            self._apps = [app for app in self._all_apps if match_app(self._search_text, app)]
         else:
             self._apps = self._all_apps.copy()
-        
         self.appsChanged.emit()
 
     @Slot()
     def reload(self):
-        self._load_data()
-
-    def _reload_applications(self):
+        apps = load_applications()
         self._all_apps = [
             {
-                "name": app.name,
-                "command": app.command,
-                "icon": app.icon,
-                "description": getattr(app, "description", ""),
-                "categories": getattr(app, "categories", [])
+                "name": a.name,
+                "command": a.command,
+                "icon": a.icon,
+                "description": getattr(a, "description", ""),
+                "categories": getattr(a, "categories", []),
             }
-            for app in load_applications()
+            for a in apps
         ]
-
         self._all_apps.sort(key=lambda x: x["name"].lower())
         self._all_apps = self.apply_history(self._all_apps)
         self._filter_apps()
 
-    def _reload_stdin(self):
+    @Slot()
+    def reload_stdin(self):
         self._all_apps = [
-            {
-                "name": item.name,
-                "command": item.command,
-                "icon": item.icon,
-                "description": item.description,
-                "categories": []
-            }
-            for item in load_stdin(self.display_columns)
+            {"name": i.name, "command": i.command, "icon": i.icon,
+             "description": i.description, "categories": []}
+            for i in load_stdin(self.display_columns)
         ]
-
         self._apps = self._all_apps.copy()
         self.appsChanged.emit()
 
-    def _reload_provider(self):
+    @Slot()
+    def reload_provider(self):
         self._all_apps = [
-            {
-                "name": item.name,
-                "command": item.command,
-                "icon": item.icon,
-                "description": item.description,
-                "categories": []
-            }
-            for item in load_provider(self.provider, self.fields)
+            {"name": i.name, "command": i.command, "icon": i.icon,
+             "description": i.description, "categories": []}
+            for i in load_provider(self.provider, self.fields)
         ]
-
         self._apps = self._all_apps.copy()
         self.appsChanged.emit()
 
@@ -207,16 +156,10 @@ class LauncherModel(QObject):
         if self.provider:
             QProcess.startDetached(self.provider, ["run", command])
             return
-
         if self.dmenu_mode:
             print(command, flush=True)
             return
-
         self.update_history(command)
-
         program, args = build_command(command)
-
-        if not program:
-            return
-
-        QProcess.startDetached(program, args)
+        if program:
+            QProcess.startDetached(program, args)
