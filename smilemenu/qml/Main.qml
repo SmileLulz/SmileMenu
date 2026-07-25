@@ -84,7 +84,6 @@ Window {
     readonly property bool prompt_exists: launcher && launcher.prompt_text !== ""
     readonly property string prompt_text: prompt_exists ? launcher.prompt_position_text : ""
 
-
     FocusScope {
         id: keyboardFocus
         anchors.fill: parent
@@ -129,7 +128,6 @@ Window {
             root.closeAnimated()
         }
     }
-
 
     Rectangle {
         id: container
@@ -192,7 +190,7 @@ Window {
                     visible: root.show_text_field
                     enabled: root.show_text_field
                     focus: true
-                    placeholderText: customPlaceholder ? customPlaceholder : "Search..."
+                    placeholderText: launcher ? launcher.placeholder : "Search..."
                     color: root.text_color
                     placeholderTextColor: root.text_field_placeholder_color
                     font.pixelSize: root.font_size
@@ -342,17 +340,38 @@ Window {
         }
     }
 
-    Component.onCompleted: {
+    function resetAnimation() {
         container.opacity = 1
         container.scale = 1
+    }
+
+    Component.onCompleted: {
+        if (!preload_mode) {
+            container.opacity = 1
+            container.scale = 1
+        }
 
         Qt.callLater(function() {
             keyboardFocus.forceActiveFocus()
-
             if (root.show_text_field) {
                 search.forceActiveFocus()
             }
         })
+    }
+
+    onVisibleChanged: {
+        if (preload_mode) {
+            search.text = ""
+            list.currentIndex = 0
+            list.hoveredIndex = -1
+        }
+        
+        if (visible) {
+            keyboardFocus.forceActiveFocus()
+            if (root.show_text_field) {
+                search.forceActiveFocus()
+            }
+        }
     }
 
     Shortcut {
@@ -363,7 +382,14 @@ Window {
     }
 
     Timer {
-        id: closeTimer
+        id: closeTimerHide
+        interval: 180
+        repeat: false
+        onTriggered: root.hide()
+    }
+
+    Timer {
+        id: closeTimerClose
         interval: 180
         repeat: false
         onTriggered: root.close()
@@ -374,6 +400,17 @@ Window {
         closing = true
         container.opacity = 0
         container.scale = 0.8
-        closeTimer.start()
+        if (preload_mode) {
+            closeTimerHide.start()
+        } else {
+            closeTimerClose.start()
+        }
+    }
+
+    onClosing: {
+        if (preload_mode) {
+            close.accepted = false
+            hide()
+        }
     }
 }

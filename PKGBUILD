@@ -1,7 +1,7 @@
 # Maintainer: SmileLulz <SmileLulz@noreply.codeberg.org>
 
 pkgname=smilemenu
-pkgver=1.4.8
+pkgver=2.0.0
 pkgrel=1
 pkgdesc="A modern and lightweight Qt launcher"
 arch=('any')

@@ -1,7 +1,7 @@
 from PySide6.QtCore import QObject, Property, Signal, Slot, QProcess
 from .launcher import load_applications
 from .history import load_history, save_history
-from .providers import load_stdin, load_provider
+from .providers import load_provider
 from .exec_parser import build_command
 
 def fuzzy_match(query, text):
@@ -27,46 +27,57 @@ def match_app(query, app):
 
 class LauncherModel(QObject):
     appsChanged = Signal()
+    promptChanged = Signal()
+    promptPositionChanged = Signal()
+    placeholderChanged = Signal()
+    windowWidthChanged = Signal()
+    showTextFieldChanged = Signal()
 
     def __init__(self, prompt="", prompt_position="entry", provider=None,
-                 fields=None, dmenu_mode=False, display_columns=None,
-                 history_limit=3, config=None):
+                 fields=None, history_limit=3, config=None):
         super().__init__()
-        self.prompt = prompt
-        self.prompt_position = prompt_position
-        self.provider = provider
-        self.fields = fields or []
-        self.dmenu_mode = dmenu_mode
-        self.display_columns = display_columns
+        self._prompt = prompt
+        self._prompt_position = prompt_position
+        self._provider = provider
+        self._fields = fields or []
         self._history_limit = (config or {}).get("history_limit", history_limit)
         self.history = load_history()
         self.config = config or {}
         self._all_apps = []
         self._apps = []
         self._search_text = ""
+        self._placeholder = "Search..."
+        self._window_width = self.config.get("window_width", 500)
+        self._show_text_field = self.config.get("show_text_field", True)
 
         if provider:
             self.reload_provider()
-        elif dmenu_mode:
-            self.reload_stdin()
         else:
             self.reload()
 
-    @Property("QVariantList", notify=appsChanged)
-    def apps(self):
-        return self._apps
-
-    @Property(str, constant=True)
+    @Property(str, notify=promptChanged)
     def prompt_text(self):
-        return self.prompt
+        return self._prompt
 
-    @Property(str, constant=True)
+    @Property(str, notify=promptPositionChanged)
     def prompt_position_text(self):
-        return self.prompt_position
+        return self._prompt_position
+
+    @Property(str, notify=placeholderChanged)
+    def placeholder(self):
+        return self._placeholder
+
+    @Property(int, notify=windowWidthChanged)
+    def window_width(self):
+        return self._window_width
+
+    @Property(bool, notify=showTextFieldChanged)
+    def show_text_field(self):
+        return self._show_text_field
 
     @Property(int, constant=True)
-    def window_width(self):
-        return self.config.get("window_width", 500)
+    def history_limit(self):
+        return self._history_limit
 
     @Property(int, constant=True)
     def min_visible_items(self):
@@ -76,13 +87,40 @@ class LauncherModel(QObject):
     def max_visible_items(self):
         return self.config.get("max_visible_items", 6)
 
-    @Property(bool, constant=True)
-    def show_text_field(self):
-        return self.config.get("show_text_field", True)
+    @Property("QVariantList", notify=appsChanged)
+    def apps(self):
+        return self._apps
 
-    @Property(int, constant=True)
-    def history_limit(self):
-        return self._history_limit
+    def setPrompt(self, text):
+        if self._prompt != text:
+            self._prompt = text
+            self.promptChanged.emit()
+
+    def setPromptPosition(self, pos):
+        if self._prompt_position != pos:
+            self._prompt_position = pos
+            self.promptPositionChanged.emit()
+
+    def setPlaceholder(self, text):
+        if self._placeholder != text:
+            self._placeholder = text
+            self.placeholderChanged.emit()
+
+    def setWindowWidth(self, width):
+        if self._window_width != width:
+            self._window_width = width
+            self.windowWidthChanged.emit()
+
+    def setShowTextField(self, show):
+        if self._show_text_field != show:
+            self._show_text_field = show
+            self.showTextFieldChanged.emit()
+
+    def setProvider(self, provider):
+        self._provider = provider
+
+    def setFields(self, fields):
+        self._fields = fields
 
     def apply_history(self, apps):
         frequent, others = [], []
@@ -123,21 +161,11 @@ class LauncherModel(QObject):
         self._filter_apps()
 
     @Slot()
-    def reload_stdin(self):
-        self._all_apps = [
-            {"name": i.name, "command": i.command, "icon": i.icon,
-             "description": i.description, "categories": []}
-            for i in load_stdin(self.display_columns)
-        ]
-        self._apps = self._all_apps.copy()
-        self.appsChanged.emit()
-
-    @Slot()
     def reload_provider(self):
         self._all_apps = [
             {"name": i.name, "command": i.command, "icon": i.icon,
              "description": i.description, "categories": []}
-            for i in load_provider(self.provider, self.fields)
+            for i in load_provider(self._provider, self._fields)
         ]
         self._apps = self._all_apps.copy()
         self.appsChanged.emit()
@@ -153,11 +181,8 @@ class LauncherModel(QObject):
 
     @Slot(str)
     def launch(self, command):
-        if self.provider:
-            QProcess.startDetached(self.provider, ["run", command])
-            return
-        if self.dmenu_mode:
-            print(command, flush=True)
+        if self._provider:
+            QProcess.startDetached(self._provider, ["run", command])
             return
         self.update_history(command)
         program, args = build_command(command)

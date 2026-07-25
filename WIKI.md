@@ -1,14 +1,14 @@
 # ⭐ Page Contents
 
 - [Usage](#usage)
+    - [First steps](#start-the-daemon)
 	- [-h, --help](#h-help)
+	- [--daemon](#daemon)
 	- [-p, --prompt](#p-prompt-prompt)
 	- [-pp, --prompt-position](#pp-prompt-position-top-entry-hidden)
 	- [-ph, --placeholder](#ph-placeholder-placeholder)
 	- [--provider](#provider-script)
 	- [--field](#field-field-mode)
-	- [-d, --dmenu](#d-dmenu)
-	- [-dc, --display-columns](#d-display-columns-column)
 	- [-w, --width](#w-width-width)
 	- [-ntf, --no-text-field](#ntf-no-text-field)
 	- [-gc, --gen-config](#gc-gen-config)
@@ -22,6 +22,14 @@
 
 # ⭐ Usage
 
+
+### 🧩 Start the daemon
+
+```sh
+smilemenu --daemon # OR --daemon &
+```
+
+
 ### 🧩 Normal application launcher
 
 ```sh
@@ -32,6 +40,15 @@ smilemenu
 ### 🧩 `-h, --help`
 
 Shows help message.
+
+
+### 🧩 `--daemon`
+
+Start the daemon.
+
+```sh
+smilemenu --daemon # OR --daemon &
+```
 
 
 ### 🧩 `-p, --prompt <PROMPT>`
@@ -167,13 +184,14 @@ Fields:
 
 Modes:
 
-| Mode   | Description                               | Example                    |
-| ------ | ----------------------------------------- | -------------------------- |
-| `path` | Uses the file/directory path as the value | `--field icon:path`        |
-| `text` | Uses the raw text/value as-is             | `--field name:text`        |
-| `none` | Sets the field to empty string            | `--field description:none` |
+| Mode       | Description                                            | Example                    |
+| ---------- | -----------------------------------------------------  | -------------------------- |
+| `<column>` | Uses a specific column number from the provider output | `--field description:2`    |
+| `path`     | Uses the file/directory path as the value              | `--field icon:path`        |
+| `text`     | Uses the raw text/value as-is                          | `--field name:text`        |
+| `none`     | Sets the field to empty string                         | `--field description:none` |
 
-Example:
+Example 1:
 
 ```sh
 # Name = filename from path
@@ -183,30 +201,13 @@ Example:
 smilemenu --provider ~/.local/bin/wallpaper-provider.sh --field name:path --field icon:path --field description:text
 ```
 
-
-### 🧩 `-d, --dmenu`
-
-Reads a list of items from stdin and prints the selected item to stdout.
-
-Examples:
+Example 2:
 
 ```sh
-echo -e "Firefox\nChrome\nBrave" | smilemenu --dmenu
+# Name = 1st column
+# Description = 2nd column
 
-cat ~/my-list.txt | smilemenu --dmenu
-
-ls ~/Documents | smilemenu --dmenu
-```
-
-
-### 🧩 `-dc, --display-columns <COLUMN>`
-
-Show only selected columns from multi-column input.
-
-Example:
-
-```sh
-cliphist list | smilemenu --dmenu --display-columns 2 -ph 'Search clipboard...' | cliphist decode | wl-copy
+smilemenu --provider ~/cliphist-provider.sh --field name:1 --field description:2
 ```
 
 
@@ -264,10 +265,10 @@ Examples:
 
 ```sh
 # Uses a different theme file
-smilemenu -c ~/.config/smilemenu/other-theme.json
+smilemenu -t ~/.config/smilemenu/other-theme.json
 
 # Generates material.json theme file
-smilemenu -gc -c ~/.config/smilemenu/material.json
+smilemenu -gt -t ~/.config/smilemenu/material.json
 ```
 
 

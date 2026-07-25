@@ -8,23 +8,21 @@ Also it has few ms slow launch because the backend is written on Python.
 
 # ❤️ SmileMenu
 
-**A modern Qt application launcher for Linux.**
+**A modern launcher for Linux desktops.**
 
-SmileMenu is a lightweight launcher. It supports desktop applications, custom scripts, providers, dmenu-style input, history, fuzzy search, basic theming, and dynamic configuration.
+SmileMenu is a modern & lightweight GUI launcher built with Python and Qt (PySide6) for Linux desktops.
 
 ### Features
 
 - Native Qt/QML interface
 - Wayland layer-shell support
 - Desktop application launcher
-- Fuzzy searching
 - Application category searching
-- Application history
-- Provider system (`list` / `run`)
-- dmenu-compatible mode
+- Recent applications
+- Fuzzy searching
+- Provider scripting system (`list` / `run`)
 - Configurable prompts
 - Dynamic window sizing
-- JSON configuration & theming
 
 
 ---
@@ -47,12 +45,12 @@ SmileMenu is a lightweight launcher. It supports desktop applications, custom sc
 
 # ⭐ Usage
 
-Read from [WIKI.md](https://codeberg.org/SmileLulz/SmileMenu/src/branch/main/WIKI.md)
+Read from [WIKI.md](https://codeberg.org/SmileLulz/SmileMenu/src/branch/main/WIKI.md).
 
 
 ---
 
-## 📌 Runtime Requirements (Arch Linux)
+## 📌 Runtime Dependencies (Arch Linux)
 
 - `python`
 - `pyside6`
@@ -85,6 +83,10 @@ cd SmileMenu
 Run:
 
 ```sh
+# Start daemon
+python -m smilemenu --daemon
+
+# Use
 python -m smilemenu
 ```
 
@@ -113,15 +115,13 @@ python -m pip install -e .
 ### Build for Arch
 
 Dependencies:
-- `python`
-- `python-pip`
 - `python-build`
 - `python-installer`
 - `python-wheel`
 - `python-setuptools`
 
 ```sh
-sudo pacman -S --needed python python-pip python-build python-installer python-wheel python-setuptools
+sudo pacman -S --needed python-build python-installer python-wheel python-setuptools
 ```
 
 Build the package:
@@ -138,6 +138,8 @@ sudo pacman -U smilemenu-x.x.x-1-any.pkg.tar.zst
 
 
 ### Build for Debian
+
+**NOTE:** Not confirmed to be work; since I am not using Debian.
 
 Dependencies:
 
