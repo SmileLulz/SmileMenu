@@ -1,3 +1,9 @@
+## ⚠️ Note
+
+If newly installed or modified applications are not executing/launching or not launching correctly, just delete the cache file (`rm ~/.cache/smilemenu/apps_cache.json`).
+
+---
+
 # ⭐ Page Contents
 
 - [Usage](#usage)

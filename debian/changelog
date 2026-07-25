@@ -1,3 +1,10 @@
+smilemenu (2.0.1-1) unstable; urgency=medium
+
+  * Version bump to 2.0.1
+  * Fixed flatpak apps not showing.
+
+ -- SmileLulz <SmileLulz@noreply.codeberg.org>  Sun, 26 Jul 2026 04:41:00 +0530
+
 smilemenu (2.0.0-1) unstable; urgency=medium
 
   * Version bump to 2.0.0

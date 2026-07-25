@@ -18,11 +18,11 @@ NC='\033[0m'
 
 usage() {
     cat << EOF
-${YELLOW}Usage:${NC}
-  $0 -mj|--major          Bump major version (1.4.3 -> 2.0.0)
-  $0 -mn|--minor          Bump minor version (1.4.3 -> 1.5.0)
-  $0 -pc|--patch          Bump patch version (1.4.3 -> 1.4.4)
-  $0 -s|--set X.Y.Z       Set explicit version
+Usage:
+  $0 1|--major           Bump major version (1.4.3 -> 2.0.0)
+  $0 2|--minor           Bump minor version (1.4.3 -> 1.5.0)
+  $0 3|--patch           Bump patch version (1.4.3 -> 1.4.4)
+  $0 -s|--set X.Y.Z      Set explicit version
 EOF
     exit 1
 }
@@ -85,14 +85,12 @@ if [[ $# -lt 1 ]]; then
 fi
 
 case "$1" in
-    -mj|--major|-mn|--minor|-pc|--patch)
+    1|--major|2|--minor|3|--patch)
         current_version=$(get_current_version)
-        bump_type="${1#-}"
-        bump_type="${bump_type#-}"
-        case "$bump_type" in
-            mj|major) new_version=$(bump_version "$current_version" "major") ;;
-            mn|minor) new_version=$(bump_version "$current_version" "minor") ;;
-            pc|patch) new_version=$(bump_version "$current_version" "patch") ;;
+        case "$1" in
+            1|--major) new_version=$(bump_version "$current_version" "major") ; bump_type="major" ;;
+            2|--minor) new_version=$(bump_version "$current_version" "minor") ; bump_type="minor" ;;
+            3|--patch) new_version=$(bump_version "$current_version" "patch") ; bump_type="patch" ;;
         esac
         echo -e "${YELLOW}Bumping ${bump_type} version: ${current_version} -> ${new_version}${NC}"
         ;;

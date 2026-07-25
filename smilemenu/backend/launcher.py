@@ -6,6 +6,7 @@ DIRECTORIES = [
     Path.home() / ".local/share/applications",
     Path("/usr/local/share/applications"),
     Path("/usr/share/applications"),
+    Path("/var/lib/flatpak/exports/share/applications"),
 ]
 
 def load_applications():
@@ -18,9 +19,12 @@ def load_applications():
         if not directory.exists():
             continue
         for desktop in directory.glob("*.desktop"):
+            name = desktop.name
+            if name in apps:
+                continue
             item = DesktopEntry.from_file(desktop)
             if item:
-                apps[desktop.name] = item
+                apps[name] = item
 
     all_items = list(apps.values())
     try:

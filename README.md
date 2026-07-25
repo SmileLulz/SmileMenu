@@ -1,8 +1,12 @@
 # ⚠️ Note First
 
-I am not willing to accept contributions. I made this project for myself. I'm making it public, because why not. You can use it.
+I am not willing to accept contributions. I made this project for myself. I'm making it public, because why not, you can use it.
 
 Also it has few ms slow launch because the backend is written on Python.
+
+## ⚠️ Also
+
+If newly installed or modified applications are not executing/launching or not launching correctly, just delete the cache file (`rm ~/.cache/smilemenu/apps_cache.json`).
 
 ---
 
