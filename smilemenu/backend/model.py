@@ -31,6 +31,7 @@ class LauncherModel(QObject):
     promptPositionChanged = Signal()
     placeholderChanged = Signal()
     windowWidthChanged = Signal()
+    maxVisibleItemsChanged = Signal()
     showTextFieldChanged = Signal()
 
     def __init__(self, prompt="", prompt_position="entry", provider=None,
@@ -83,7 +84,7 @@ class LauncherModel(QObject):
     def min_visible_items(self):
         return self.config.get("min_visible_items", 1)
 
-    @Property(int, constant=True)
+    @Property(int, notify=maxVisibleItemsChanged)
     def max_visible_items(self):
         return self.config.get("max_visible_items", 6)
 
@@ -110,6 +111,11 @@ class LauncherModel(QObject):
         if self._window_width != width:
             self._window_width = width
             self.windowWidthChanged.emit()
+
+    def setMaxVisibleItems(self, value):
+        if self.config.get("max_visible_items") != value:
+            self.config["max_visible_items"] = value
+            self.maxVisibleItemsChanged.emit()
 
     def setShowTextField(self, show):
         if self._show_text_field != show:

@@ -1,3 +1,13 @@
+smilemenu (2.1.0-1) unstable; urgency=medium
+
+  * Version bump to 2.1.0
+  * Fixed field column selection.
+  * Added argument for max visible items (`-mi, --max-items <COUNT>`).
+  * Added argument for deleting caches (`--dcache {app,all}`).
+  * Added descriptions in help message.
+
+ -- SmileLulz <SmileLulz@noreply.codeberg.org>  Tue, 28 Jul 2026 02:01:42 +0530
+
 smilemenu (2.0.1-1) unstable; urgency=medium
 
   * Version bump to 2.0.1

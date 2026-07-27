@@ -17,10 +17,12 @@ If newly installed or modified applications are not executing/launching or not l
 	- [--field](#field-field-mode)
 	- [-w, --width](#w-width-width)
 	- [-ntf, --no-text-field](#ntf-no-text-field)
+	- [-mi, --max-items](#mi-max-items-count)
 	- [-gc, --gen-config](#gc-gen-config)
 	- [-gt, --gen-theme](#gt-gen-theme)
 	- [-c, --config](#c-config-path)
 	- [-t, --theme](#t-theme-path)
+	- [--dcache](#dcache-app-all)
 - [Keyboard Controls](#keyboard-controls)
 
 
@@ -227,14 +229,20 @@ Example:
 smilemenu -w 700
 ```
 
+
 ### 🧩 `-ntf, --no-text-field`
 
 Disables text field / search box.
 
+
+### 🧩 `-mi, --max-items <COUNT>`
+
+Set custom max visible items (list height).
+
 Example:
 
 ```sh
-smilemenu -ntf -p "Applications"
+smilemenu -mi 3
 ```
 
 
@@ -275,6 +283,21 @@ smilemenu -t ~/.config/smilemenu/other-theme.json
 
 # Generates material.json theme file
 smilemenu -gt -t ~/.config/smilemenu/material.json
+```
+
+
+### 🧩 `--dcache {app,all}`
+
+Delete cache; either app cache or all cache.
+
+Examples:
+
+```sh
+# Deletes just the app cache
+smilemenu --dcache app
+
+# Deletes the entire cache directory (~/.cache/smilemenu/)
+smilemenu --dcache all
 ```
 
 

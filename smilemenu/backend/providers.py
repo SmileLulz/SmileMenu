@@ -43,16 +43,16 @@ def load_provider(provider, fields=None):
 
 def provider_item(value, fields=None):
     path = Path(value)
-
     data = {
         "name": path.name,
         "command": value,
         "icon": "",
         "description": ""
     }
-
     if path.exists():
         data["icon"] = str(path)
+
+    columns = value.split("\t") if "\t" in value else [value]
 
     if fields:
         for field in fields:
@@ -60,7 +60,6 @@ def provider_item(value, fields=None):
                 key, mode = field.split(":", 1)
             except ValueError:
                 continue
-
             if mode == "path":
                 if key == "name":
                     data[key] = path.name
@@ -70,6 +69,13 @@ def provider_item(value, fields=None):
                 data[key] = value
             elif mode == "none":
                 data[key] = ""
+            else:
+                try:
+                    col_index = int(mode) - 1
+                    if 0 <= col_index < len(columns):
+                        data[key] = columns[col_index]
+                except ValueError:
+                    pass
 
     return LauncherItem(
         name=data["name"],

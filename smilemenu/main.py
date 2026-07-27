@@ -43,6 +43,7 @@ def handle_daemon_request(sock, args):
         "provider": args.provider,
         "fields": args.field,
         "width": args.width,
+        "max_items": args.max_items,
         "no_text_field": args.no_text_field,
     }
     send_request(sock, request)
@@ -59,6 +60,7 @@ def run_daemon(args, config, theme, lock):
     engine.addImageProvider("icons", IconProvider())
 
     default_width = config.get("window_width", 500)
+    default_max_items = config.get("max_visible_items", 6)
     default_show_text_field = config.get("show_text_field", True)
 
     launcher = LauncherModel(
@@ -109,6 +111,7 @@ def run_daemon(args, config, theme, lock):
         launcher.setPromptPosition("entry")
         launcher.setPlaceholder("Search...")
         launcher.setWindowWidth(default_width)
+        launcher.setMaxVisibleItems(default_max_items)
         launcher.setShowTextField(default_show_text_field)
         launcher.setProvider(None)
         launcher.setFields([])
@@ -121,6 +124,8 @@ def run_daemon(args, config, theme, lock):
         launcher.setFields(req.get("fields", []))
         if req.get("width") is not None:
             launcher.setWindowWidth(req["width"])
+        if req.get("max_items") is not None:
+            launcher.setMaxVisibleItems(req["max_items"])
         if req.get("no_text_field") is not None:
             launcher.setShowTextField(not req["no_text_field"])
 
@@ -183,18 +188,20 @@ def run_daemon(args, config, theme, lock):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--daemon", action="store_true")
-    parser.add_argument("-p", "--prompt", default="")
-    parser.add_argument("-pp", "--prompt-position", choices=["top", "entry", "hidden"], default="entry")
-    parser.add_argument("-ph", "--placeholder", default="Search...")
-    parser.add_argument("--provider")
-    parser.add_argument("--field", action="append", default=[])
-    parser.add_argument("-w", "--width", type=int, default=None)
-    parser.add_argument("-ntf", "--no-text-field", action="store_true")
-    parser.add_argument("-gc", "--gen-config", action="store_true")
-    parser.add_argument("-gt", "--gen-theme", action="store_true")
-    parser.add_argument("-c", "--config")
-    parser.add_argument("-t", "--theme")
+    parser.add_argument("--daemon", action="store_true", help="Run the daemon")
+    parser.add_argument("-p", "--prompt", default="", help="Set a custom prompt")
+    parser.add_argument("-pp", "--prompt-position", choices=["top", "entry", "hidden"], default="entry", help="Set custom prompt position")
+    parser.add_argument("-ph", "--placeholder", default="Search...", help="Set a custom text field placeholder text")
+    parser.add_argument("--provider", help="Use a provider script")
+    parser.add_argument("--field", action="append", default=[], help="Set fields as custom modes")
+    parser.add_argument("-w", "--width", type=int, default=None, help="Set custom window width")
+    parser.add_argument("-ntf", "--no-text-field", action="store_true", help="Hide the text field")
+    parser.add_argument("-mi", "--max-items", type=int, default=None, help="Set custom max visible items (list height)")
+    parser.add_argument("-gc", "--gen-config", action="store_true", help="Generate config file")
+    parser.add_argument("-gt", "--gen-theme", action="store_true", help="Generate theme file")
+    parser.add_argument("-c", "--config", help="Pass a custom config file")
+    parser.add_argument("-t", "--theme", help="Pass a custom theme file")
+    parser.add_argument("--dcache", choices=["app", "all"], help="Delete cache; either app cache or all cache")
     args = parser.parse_args()
 
     config_path = Path(args.config).expanduser().resolve() if args.config else CONFIG_FILE
@@ -216,6 +223,24 @@ def main():
         from .backend.theme import save_theme, DEFAULT_THEME
         save_theme(DEFAULT_THEME, theme_path)
         print("Generated theme:", theme_path)
+        return 0
+    
+    if args.dcache:
+        cache_dir = Path.home() / ".cache/smilemenu"
+        if args.dcache == "app":
+            cache_file = cache_dir / "apps_cache.json"
+            if cache_file.exists():
+                cache_file.unlink()
+                print("Removed app cache:", cache_file)
+            else:
+                print("No app cache found")
+        elif args.dcache == "all":
+            if cache_dir.exists():
+                import shutil
+                shutil.rmtree(cache_dir)
+                print("Removed entire cache directory:", cache_dir)
+            else:
+                print("No cache directory found")
         return 0
 
     if args.daemon:
