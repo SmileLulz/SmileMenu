@@ -12,7 +12,7 @@
 ---
 
 
-# Latest changelog (v2.0.1)
+# Latest changelog (v2.1.0)
 
 - Fixed field column selection.
 - Added argument for max visible items (`-mi, --max-items <COUNT>`).
