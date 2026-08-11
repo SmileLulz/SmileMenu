@@ -24,11 +24,6 @@ override_dh_auto_install:
 
 	chmod +x debian/smilemenu/usr/bin/smilemenu
 
-	mkdir -p debian/smilemenu/usr/share/icons/hicolor/256x256/apps
-
-	cp data/icons/smilemenu.png \
-		debian/smilemenu/usr/share/icons/hicolor/256x256/apps/smilemenu.png
-
 override_dh_builddeb:
 	dh_builddeb
 

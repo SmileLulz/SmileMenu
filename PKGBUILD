@@ -1,20 +1,20 @@
-# Maintainer: SmileLulz <SmileLulz@noreply.codeberg.org>
+# Maintainer: SmileLulz <SmileLulz404@noreply.codeberg.org>
 
 pkgname=smilemenu
-pkgver=2.1.0
+pkgver=2.2.0
 pkgrel=1
-pkgdesc="A modern and lightweight Qt launcher"
+pkgdesc="A modern and simple launcher for Linux"
 arch=('any')
-url="https://codeberg.org/SmileLulz/SmileMenu"
+url="https://codeberg.org/SmileLulz404/SmileMenu"
 license=('MIT')
 
 depends=(
     'python'
-    'pyside6'
     'qt6-base'
     'qt6-declarative'
-    'shiboken6'
     'layer-shell-qt'
+    'shiboken6'
+    'pyside6'
 )
 
 makedepends=(
@@ -41,14 +41,6 @@ package() {
     python -m installer \
         --destdir="$pkgdir" \
         dist/*.whl
-
-    install -Dm644 \
-        data/icons/smilemenu.png \
-        "$pkgdir/usr/share/icons/hicolor/256x256/apps/smilemenu.png"
-
-    install -Dm644 \
-        data/smilemenu.desktop \
-        "$pkgdir/usr/share/applications/smilemenu.desktop"
 
     install -Dm644 \
         LICENSE \

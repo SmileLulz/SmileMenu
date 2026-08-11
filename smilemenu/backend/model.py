@@ -15,14 +15,26 @@ def fuzzy_match(query, text):
             index += 1
     return index == len(query)
 
-def match_app(query, app):
+def match_app(query, app, config=None):
     if not query:
         return True
-    if fuzzy_match(query, app["name"]):
-        return True
-    for category in app.get("categories", []):
-        if fuzzy_match(query, category):
+    use_fuzzy = True
+    if config and isinstance(config, dict):
+        use_fuzzy = config.get("fuzzy_search", True)
+
+    if use_fuzzy:
+        if fuzzy_match(query, app["name"]):
             return True
+        for category in app.get("categories", []):
+            if fuzzy_match(query, category):
+                return True
+    else:
+        query_lower = query.lower()
+        if query_lower in app["name"].lower():
+            return True
+        for category in app.get("categories", []):
+            if query_lower in category.lower():
+                return True
     return False
 
 class LauncherModel(QObject):
@@ -144,7 +156,7 @@ class LauncherModel(QObject):
 
     def _filter_apps(self):
         if self._search_text:
-            self._apps = [app for app in self._all_apps if match_app(self._search_text, app)]
+            self._apps = [app for app in self._all_apps if match_app(self._search_text, app, self.config)]
         else:
             self._apps = self._all_apps.copy()
         self.appsChanged.emit()

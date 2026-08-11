@@ -7,9 +7,9 @@ PKGBUILD="PKGBUILD"
 CHANGELOG="debian/changelog"
 CONTROL="debian/control"
 
-CHANGELOG_MAINTAINER="SmileLulz <SmileLulz@noreply.codeberg.org>"
-PKGBUILD_MAINTAINER="SmileLulz <SmileLulz@noreply.codeberg.org>"
-CONTROL_MAINTAINER="SmileLulz <SmileLulz@noreply.codeberg.org>"
+CHANGELOG_MAINTAINER="SmileLulz <SmileLulz404@noreply.codeberg.org>"
+PKGBUILD_MAINTAINER="SmileLulz <SmileLulz404@noreply.codeberg.org>"
+CONTROL_MAINTAINER="SmileLulz <SmileLulz404@noreply.codeberg.org>"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

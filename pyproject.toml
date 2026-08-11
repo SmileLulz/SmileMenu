@@ -1,28 +1,26 @@
 [build-system]
-requires = [
-    "setuptools",
-    "wheel"
-]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
-
 
 [project]
 name = "smilemenu"
-version = "2.1.0"
-description = "A modern Qt launcher for Linux"
+version = "2.2.0"
+description = "A modern and simple launcher for Linux"
+authors = [{name = "SmileLulz"}]
+license = {text = "MIT"}
+readme = "README.md"
 requires-python = ">=3.11"
+dependencies = ["pyside6-essentials"]
 
-dependencies = ["PySide6"]
-
+[project.urls]
+Repository = "https://codeberg.org/SmileLulz404/SmileMenu"
 
 [project.scripts]
 smilemenu = "smilemenu.main:main"
 
-
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["smilemenu*"]
-
 
 [tool.setuptools.package-data]
 smilemenu = ["qml/*.qml"]

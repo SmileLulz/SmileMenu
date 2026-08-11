@@ -1,79 +1,59 @@
-# ⚠️ Note First
-
-I am not willing to accept contributions. I made this project for myself. I'm making it public, because why not, you can use it.
-
-Also it has few ms slow launch because the backend is written on Python.
-
-## ⚠️ Also
-
-If newly installed or modified applications are not executing/launching or not launching correctly, just delete the cache file (`rm ~/.cache/smilemenu/apps_cache.json`).
-
----
-
 # ❤️ SmileMenu
 
-**A modern launcher for Linux desktops.**
+**A modern and simple launcher for Linux desktops.**
 
 SmileMenu is a modern & lightweight GUI launcher built with Python and Qt (PySide6) for Linux desktops.
+
+
+> This project was meant to be a personal project, but I'm sharing anyways. Therefore, I am not accepting any contributions. Thank you.
+> Also, if newly installed or modified applications are not executing/launching or not launching correctly, just run `smilemenu --dcache app` or manually delete the cache file (`rm ~/.cache/smilemenu/apps_cache.json`).
+
 
 ### Features
 
 - Native Qt/QML interface
 - Wayland layer-shell support
+- Dynamic window sizing
 - Desktop application launcher
 - Application category searching
 - Recent applications
 - Fuzzy searching
 - Provider scripting system (`list` / `run`)
 - Configurable prompts
-- Dynamic window sizing
+- And many more...
+- See [WIKI.md](https://codeberg.org/SmileLulz404/SmileMenu/src/branch/main/WIKI.md) for everything
 
-
----
 
 # 🏞️ Screenshots
 
-<table>
-  <tr>
-    <td align="center">
-      <img src="0-Screenshots/0.png" alt="Screenshot 0" width="512"/>
-    </td>
-    <td align="center">
-      <img src="0-Screenshots/1.png" alt="Screenshot 1" width="512"/>
-    </td>
-  </tr>
-</table>
+<div style="display: flex; gap: 10px; align-items: center;">
+  <img src="https://codeberg.org/SmileLulz404/SmileMenu/src/branch/main/0-Screenshots/0.png" alt="Screenshot 1" style="max-width: 100%; height: auto;">
+  <img src="https://codeberg.org/SmileLulz404/SmileMenu/src/branch/main/0-Screenshots/0.png" alt="Screenshot 2" style="max-width: 100%; height: auto;">
+</div>
 
-
----
 
 # ⭐ Usage
 
-Read from [WIKI.md](https://codeberg.org/SmileLulz/SmileMenu/src/branch/main/WIKI.md).
+Read from [WIKI.md](https://codeberg.org/SmileLulz404/SmileMenu/src/branch/main/WIKI.md).
 
-
----
 
 ## 📌 Runtime Dependencies (Arch Linux)
 
 - `python`
-- `pyside6`
 - `qt6-base`
 - `qt6-declarative`
-- `shiboken6`
 - `layer-shell-qt`
+- `shiboken6`
+- `pyside6-essentials` or `pyside6`
 
 ```sh
 sudo pacman -S --needed python pyside6 qt6-base qt6-declarative shiboken6 layer-shell-qt
 ```
 
 
----
-
 # ⚙️ Build & Installation
 
-**IMPORTANT:** All below guides are wrote for Arch Linux only.
-
+**IMPORTANT:** All below guides are wrote for/in Arch Linux only; since I am using Arch, I can't guarentee that other guides will work correctly.
 
 ### Running from source
 
@@ -87,38 +67,30 @@ cd SmileMenu
 Run:
 
 ```sh
-# Start daemon
-python -m smilemenu --daemon
+# Start the daemon
+python -m smilemenu --daemon # or --daemon &
 
 # Use
 python -m smilemenu
 ```
 
-
 ### Build for any distro (python pip)
 
-Build the package:
-
 ```sh
+# Build the package
 python -m build
-```
 
-Install locally:
-
-```sh
+# Install locally
 python -m pip install .
-```
 
-For development:
-
-```sh
+# For development
 python -m pip install -e .
 ```
-
 
 ### Build for Arch
 
 Dependencies:
+
 - `python-build`
 - `python-installer`
 - `python-wheel`
@@ -128,18 +100,11 @@ Dependencies:
 sudo pacman -S --needed python-build python-installer python-wheel python-setuptools
 ```
 
-Build the package:
+Build and install:
 
 ```sh
-makepkg -cfC
+makepkg -csfCi
 ```
-
-Install locally:
-
-```sh
-sudo pacman -U smilemenu-x.x.x-1-any.pkg.tar.zst
-```
-
 
 ### Build for Debian
 

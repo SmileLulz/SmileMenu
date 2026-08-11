@@ -1,7 +1,7 @@
 Source: smilemenu
 Section: utils
 Priority: optional
-Maintainer: SmileLulz <SmileLulz@noreply.codeberg.org>
+Maintainer: SmileLulz <SmileLulz404@noreply.codeberg.org>
 Build-Depends:
     debhelper-compat (= 13),
     python3,
