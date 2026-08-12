@@ -2,7 +2,6 @@
 
 If newly installed or modified applications are not executing/launching or not launching correctly, just delete the cache file (`rm ~/.cache/smilemenu/apps_cache.json`).
 
----
 
 # ⭐ Page Contents
 
@@ -25,8 +24,6 @@ If newly installed or modified applications are not executing/launching or not l
 	- [--dcache](#dcache-app-all)
 - [Keyboard Controls](#keyboard-controls)
 
-
----
 
 # ⭐ Usage
 
@@ -253,36 +250,36 @@ Generates default config file (`~/.config/smilemenu/config.json`).
 
 ### 🧩 `-gc, --gen-theme`
 
-Generates default theme file (`~/.config/smilemenu/theme.json`).
+Generates default theme file (`~/.config/smilemenu/theme/Main.qml`).
 
 
 ### 🧩 `-c, --config <PATH>`
 
-Overrides config file. Also can be used to generated config files with different names.
+Overrides config file. Can also be use to generate custom config files with different names and in different path.
 
 Examples:
 
 ```sh
 # Uses a different config file
-smilemenu -c ~/.config/smilemenu/other-config.json
+smilemenu -c ~/.config/smilemenu/new-config.json
 
-# Generates new.json config file
-smilemenu -gc -c ~/.config/smilemenu/new.json
+# Generates another.json config file
+smilemenu -gc -c ~/Documents/another.json
 ```
 
 
 ### 🧩 `-t, --theme <PATH>`
 
-Overrides theme file. Also can be used to generated theme files with different names.
+Overrides theme file. Can also be use to generate custom theme files with different names and in different path.
 
 Examples:
 
 ```sh
 # Uses a different theme file
-smilemenu -t ~/.config/smilemenu/other-theme.json
+smilemenu -t ~/.config/smilemenu/theme/new-theme.qml
 
-# Generates material.json theme file
-smilemenu -gt -t ~/.config/smilemenu/material.json
+# Generates other-theme.qml theme file
+smilemenu -gt -t ~/Documents/other-theme.qml
 ```
 
 
@@ -301,13 +298,11 @@ smilemenu --dcache all
 ```
 
 
----
-
-## Keyboard Controls
+# ⭐ Keyboard Controls
 
 | Key    | Action        |
 | ------ | ------------- |
 | Up     | Previous item |
 | Down   | Next item     |
-| Enter  | Launch        |
+| Enter  | Execute       |
 | Escape | Close         |

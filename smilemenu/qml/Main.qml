@@ -10,37 +10,37 @@ Window {
 
     property bool closing: false
 
-    property real window_radius: theme ? theme.window_radius : 40
-    property color background_color: theme ? theme.background_color : "#303446"
+    property real window_radius: 40
+    property color background_color: "#1c192b"
 
     property bool show_text_field: launcher ? launcher.show_text_field : true
 
-    property real item_spacing: theme ? theme.item_spacing : 0
-    property real item_radius_high: theme ? theme.item_radius_high : 28
-    property real item_radius_low: theme ? theme.item_radius_low : 0
-    property color item_color: theme ? theme.item_color : "transparent"
-    property color item_hover_color: theme ? theme.item_hover_color : "#626880"
-    property color item_container_color: theme ? theme.item_container_color : "#414559"
-    property int item_height: theme ? theme.item_height : 50
-    property int item_height_description: theme ? theme.item_height_description : 65
+    property real item_spacing: 0
+    property real item_radius_high: 28
+    property real item_radius_low: 0
+    property color item_color: "transparent"
+    property color item_hover_color: "#484459"
+    property color item_container_color: "#312e41"
+    property int item_height: 50
+    property int item_height_description: 65
 
     property int min_visible_items: launcher ? launcher.min_visible_items : 1
     property int max_visible_items: launcher ? launcher.max_visible_items : 6
 
-    property int content_margins: theme ? theme.content_margins : 28
-    property int content_spacing: theme ? theme.content_spacing : 14
+    property int content_margins: 28
+    property int content_spacing: 14
 
-    property color text_color: theme ? theme.text_color : "#c6d0f5"
-    property color text_color_secondary: theme ? theme.text_color_secondary : "#949cbb"
-    property int font_size: theme ? theme.font_size : 16
-    property int font_size_secondary: theme ? theme.font_size_secondary : 12
-    property bool font_bold: theme ? theme.font_bold : false
+    property color text_color: "#e5e1e9"
+    property color text_color_secondary: "#c9c5d0"
+    property int font_size: 16
+    property int font_size_secondary: 12
+    property bool font_bold: false
 
-    property color text_field_placeholder_color: theme ? theme.text_field_placeholder_color : "#737994"
-    property color text_field_color: theme ? theme.text_field_color : "transparent"
-    property color text_field_border_color: theme ? theme.text_field_border_color : "transparent"
-    property real text_field_border_width: theme ? theme.text_field_border_width : 0
-    property real text_field_radius: theme ? theme.text_field_radius : 0
+    property color text_field_placeholder_color: "#938f99"
+    property color text_field_color: "transparent"
+    property color text_field_border_color: "transparent"
+    property real text_field_border_width: 0
+    property real text_field_radius: 0
 
     visible: true
     color: "transparent"
@@ -365,7 +365,7 @@ Window {
             list.currentIndex = 0
             list.hoveredIndex = -1
         }
-        
+
         if (visible) {
             keyboardFocus.forceActiveFocus()
             if (root.show_text_field) {
@@ -381,30 +381,37 @@ Window {
         }
     }
 
-    Timer {
-        id: closeTimerHide
-        interval: 180
-        repeat: false
-        onTriggered: root.hide()
-    }
+    ParallelAnimation {
+        id: closeAnimation
 
-    Timer {
-        id: closeTimerClose
-        interval: 180
-        repeat: false
-        onTriggered: root.close()
+        NumberAnimation {
+            target: container
+            property: "opacity"
+            to: 0
+            duration: 140
+            easing.type: Easing.OutCubic
+        }
+        NumberAnimation {
+            target: container
+            property: "scale"
+            to: 0.88
+            duration: 180
+            easing.type: Easing.OutCubic
+        }
+
+        onFinished: {
+            if (typeof preload_mode !== "undefined" && preload_mode) {
+                root.hide()
+            } else {
+                root.close()
+            }
+        }
     }
 
     function closeAnimated() {
         if (closing) return
         closing = true
-        container.opacity = 0
-        container.scale = 0.8
-        if (preload_mode) {
-            closeTimerHide.start()
-        } else {
-            closeTimerClose.start()
-        }
+        closeAnimation.start()
     }
 
     onClosing: {

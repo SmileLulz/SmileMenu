@@ -1,7 +1,7 @@
 # Maintainer: SmileLulz <SmileLulz404@noreply.codeberg.org>
 
 pkgname=smilemenu
-pkgver=2.2.0
+pkgver=3.0.0
 pkgrel=1
 pkgdesc="A modern and simple launcher for Linux"
 arch=('any')

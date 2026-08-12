@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "smilemenu"
-version = "2.2.0"
+version = "3.0.0"
 description = "A modern and simple launcher for Linux"
 authors = [{name = "SmileLulz"}]
 license = {text = "MIT"}

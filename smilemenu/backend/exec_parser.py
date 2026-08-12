@@ -1,16 +1,8 @@
 import shlex
+import re
 
-FIELD_CODES = {
-    "%f",
-    "%F",
-    "%u",
-    "%U",
-    "%i",
-    "%c",
-    "%k",
-    "%%"
-}
-
+# Standard Freedesktop field codes (%f, %F, %u, %U, %i, %c, %k, %v, %m)
+FIELD_CODE_RE = re.compile(r'%[fFuUiIckvm]')
 
 def build_command(exec_line):
     if not exec_line:
@@ -19,20 +11,23 @@ def build_command(exec_line):
     try:
         parts = shlex.split(exec_line)
     except ValueError:
-        return None, []
+        # Fallback simple split if quotes are unclosed
+        parts = exec_line.split()
 
     result = []
 
     for part in parts:
-        if part in FIELD_CODES:
-            if part == "%%":
-                result.append("%")
+        if part == "%%":
+            result.append("%")
             continue
 
         if part.startswith("@@"):
             continue
 
-        result.append(part)
+        cleaned = FIELD_CODE_RE.sub("", part)
+
+        if cleaned:
+            result.append(cleaned)
 
     if not result:
         return None, []

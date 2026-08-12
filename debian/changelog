@@ -1,3 +1,20 @@
+smilemenu (3.0.0-1) unstable; urgency=medium
+
+  * Version bump to 3.0.0
+  * Refactored theming system (now uses custom QML file(s) instead of JSON file(s))
+  * Fixed fuzzy search config property doing nothing
+  * New config properties
+  * Lot of optimization
+  * Removed icon and desktop shortcut
+
+ -- SmileLulz <SmileLulz404@noreply.codeberg.org>  Wed, 12 Aug 2026 07:28:22 +0530
+
+smilemenu (2.3.0-1) unstable; urgency=medium
+
+  * Version bump to 2.3.0
+
+ -- SmileLulz <SmileLulz404@noreply.codeberg.org>  Tue, 11 Aug 2026 20:34:16 +0530
+
 smilemenu (2.2.0-1) unstable; urgency=medium
 
   * Version bump to 2.2.0

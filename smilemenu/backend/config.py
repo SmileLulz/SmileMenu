@@ -12,7 +12,9 @@ DEFAULT_CONFIG = {
     "min_visible_items": 1,
     "max_visible_items": 6,
     "fuzzy_search": True,
-    "show_text_field": True
+    "show_text_field": True,
+    "max_icon_cache_size": 256,
+    "max_theme_cache_size": 5,
 }
 
 

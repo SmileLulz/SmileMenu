@@ -1,8 +1,9 @@
 from PySide6.QtCore import QObject, Property, Signal, Slot, QProcess
 from .launcher import load_applications
 from .history import load_history, save_history
-from .providers import load_provider
+from .providers import provider_item
 from .exec_parser import build_command
+
 
 def fuzzy_match(query, text):
     query = query.lower()
@@ -14,6 +15,7 @@ def fuzzy_match(query, text):
         if index < len(query) and char == query[index]:
             index += 1
     return index == len(query)
+
 
 def match_app(query, app, config=None):
     if not query:
@@ -37,6 +39,7 @@ def match_app(query, app, config=None):
                 return True
     return False
 
+
 class LauncherModel(QObject):
     appsChanged = Signal()
     promptChanged = Signal()
@@ -53,15 +56,19 @@ class LauncherModel(QObject):
         self._prompt_position = prompt_position
         self._provider = provider
         self._fields = fields or []
-        self._history_limit = (config or {}).get("history_limit", history_limit)
-        self.history = load_history()
         self.config = config or {}
+        self._history_limit = self.config.get("history_limit", history_limit)
+        self.history = load_history()
+
         self._all_apps = []
         self._apps = []
         self._search_text = ""
         self._placeholder = "Search..."
         self._window_width = self.config.get("window_width", 500)
         self._show_text_field = self.config.get("show_text_field", True)
+
+        self._provider_process = QProcess(self)
+        self._provider_process.finished.connect(self._on_provider_finished)
 
         if provider:
             self.reload_provider()
@@ -180,13 +187,37 @@ class LauncherModel(QObject):
 
     @Slot()
     def reload_provider(self):
-        self._all_apps = [
-            {"name": i.name, "command": i.command, "icon": i.icon,
-             "description": i.description, "categories": []}
-            for i in load_provider(self._provider, self._fields)
-        ]
-        self._apps = self._all_apps.copy()
-        self.appsChanged.emit()
+        if not self._provider:
+            return
+
+        if self._provider_process.state() != QProcess.NotRunning:
+            self._provider_process.kill()
+            self._provider_process.waitForFinished(100)
+
+        self._provider_process.start(self._provider, ["list"])
+
+    def _on_provider_finished(self, exit_code, exit_status):
+        if exit_code != 0:
+            return
+
+        output = self._provider_process.readAllStandardOutput().data().decode("utf-8")
+        self._all_apps = []
+
+        for line in output.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+
+            item = provider_item(line, self._fields)
+            self._all_apps.append({
+                "name": item.name,
+                "command": item.command,
+                "icon": item.icon,
+                "description": item.description,
+                "categories": [],
+            })
+
+        self._filter_apps()
 
     def update_history(self, command):
         self.history[command] = self.history.get(command, 0) + 1
