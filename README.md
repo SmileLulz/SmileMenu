@@ -2,10 +2,11 @@
 
 **A modern and simple launcher for Linux desktops.**
 
-SmileMenu is a modern & lightweight GUI launcher built with Python and Qt (PySide6) for Linux desktops.
+SmileMenu is a modern & simple GUI launcher built with Python and Qt (PySide6) for Linux desktops.
 
 
 > This project was meant to be a personal project, but I'm sharing anyways. Therefore, I am not accepting any contributions. Thank you.
+>
 > Also, if newly installed or modified applications are not executing/launching or not launching correctly, just run `smilemenu --dcache app` or manually delete the cache file (`rm ~/.cache/smilemenu/apps_cache.json`).
 
 
@@ -26,10 +27,8 @@ SmileMenu is a modern & lightweight GUI launcher built with Python and Qt (PySid
 
 # 🏞️ Screenshots
 
-<div style="display: flex; gap: 10px; align-items: center;">
-  <img src="https://codeberg.org/SmileLulz404/SmileMenu/raw/branch/main/0-Screenshots/0.png" alt="Screenshot 1" style="max-width: 100%; height: auto;">
-  <img src="https://codeberg.org/SmileLulz404/SmileMenu/raw/branch/main/0-Screenshots/0.png" alt="Screenshot 2" style="max-width: 100%; height: auto;">
-</div>
+| ![Screenshot 1](https://codeberg.org/SmileLulz404/SmileMenu/raw/branch/main/0-Screenshots/0.png) | ![Screenshot 2](https://codeberg.org/SmileLulz404/SmileMenu/raw/branch/main/0-Screenshots/0.png) |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
 
 
 # ⭐ Usage
