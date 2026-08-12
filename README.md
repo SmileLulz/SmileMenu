@@ -27,7 +27,7 @@ SmileMenu is a modern & simple GUI launcher built with Python and Qt (PySide6) f
 
 # 🏞️ Screenshots
 
-| ![Screenshot 1](https://codeberg.org/SmileLulz404/SmileMenu/raw/branch/main/0-Screenshots/0.png) | ![Screenshot 2](https://codeberg.org/SmileLulz404/SmileMenu/raw/branch/main/0-Screenshots/0.png) |
+| ![Screenshot 1](https://codeberg.org/SmileLulz404/SmileMenu/raw/branch/main/0-Screenshots/0.png) | ![Screenshot 2](https://codeberg.org/SmileLulz404/SmileMenu/raw/branch/main/0-Screenshots/1.png) |
 | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
 
 
