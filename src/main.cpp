@@ -8,10 +8,10 @@
 #include <QLocalSocket>
 #include <QJsonArray>
 #include <unistd.h>
-// #include "config.h"
+#include "config.h"
 #include "lock.h"
 #include "daemon.h"
-// #include "desktopentry.h"
+#include "desktopentry.h"
 
 static const QString SOCKET_PATH = QString("/tmp/smilemenu-%1.sock").arg(getuid());
 

@@ -10,15 +10,15 @@ If newly installed or modified applications are not executing/launching or not l
 	- [-h, --help](#h-help)
 	- [--daemon](#daemon)
 	- [-p, --prompt](#p-prompt-prompt)
-	- [-pp, --prompt-position](#pp-prompt-position-top-entry-hidden)
-	- [-ph, --placeholder](#ph-placeholder-placeholder)
+	- [--pp, --prompt-position](#pp-prompt-position-top-entry-hidden)
+	- [--ph, --placeholder](#ph-placeholder-placeholder)
 	- [--provider](#provider-script)
 	- [--field](#field-field-mode)
 	- [-w, --width](#w-width-width)
-	- [-ntf, --no-text-field](#ntf-no-text-field)
-	- [-mi, --max-items](#mi-max-items-count)
-	- [-gc, --gen-config](#gc-gen-config)
-	- [-gt, --gen-theme](#gt-gen-theme)
+	- [--ntf, --no-text-field](#ntf-no-text-field)
+	- [--mi, --max-items](#mi-max-items-count)
+	- [--gc, --gen-config](#gc-gen-config)
+	- [--gt, --gen-theme](#gt-gen-theme)
 	- [-c, --config](#c-config-path)
 	- [-t, --theme](#t-theme-path)
 	- [--dcache](#dcache-app-all)
@@ -67,7 +67,7 @@ smilemenu -p "Apps"
 ```
 
 
-### 🧩 `-pp, --prompt-position {top,entry,hidden}`
+### 🧩 `--pp, --prompt-position {top,entry,hidden}`
 
 Positions the prompt text. Entry by default.
 
@@ -80,14 +80,14 @@ smilemenu -p "Apps" --prompt-position entry
 ```
 
 
-### 🧩 `-ph, --placeholder <PLACEHOLDER>`
+### 🧩 `--ph, --placeholder <PLACEHOLDER>`
 
 Overrides the default placeholder text.
 
 Example:
 
 ```sh
-smilemenu -ph "Search Apps..."
+smilemenu --placeholder "Search Apps..."
 ```
 
 
@@ -227,28 +227,28 @@ smilemenu -w 700
 ```
 
 
-### 🧩 `-ntf, --no-text-field`
+### 🧩 `--ntf, --no-text-field`
 
 Disables text field / search box.
 
 
-### 🧩 `-mi, --max-items <COUNT>`
+### 🧩 `--mi, --max-items <COUNT>`
 
 Set custom max visible items (list height).
 
 Example:
 
 ```sh
-smilemenu -mi 3
+smilemenu --max-items 3
 ```
 
 
-### 🧩 `-gc, --gen-config`
+### 🧩 `--gc, --gen-config`
 
 Generates default config file (`~/.config/smilemenu/config.json`).
 
 
-### 🧩 `-gc, --gen-theme`
+### 🧩 `--gt, --gen-theme`
 
 Generates default theme file (`~/.config/smilemenu/theme/Main.qml`).
 
@@ -261,10 +261,10 @@ Examples:
 
 ```sh
 # Uses a different config file
-smilemenu -c ~/.config/smilemenu/new-config.json
+smilemenu --config ~/.config/smilemenu/new-config.json
 
-# Generates another.json config file
-smilemenu -gc -c ~/Documents/another.json
+# Generates a custom config file
+smilemenu --gen-config --config ~/Documents/another.json
 ```
 
 
@@ -276,10 +276,10 @@ Examples:
 
 ```sh
 # Uses a different theme file
-smilemenu -t ~/.config/smilemenu/theme/new-theme.qml
+smilemenu --theme ~/.config/smilemenu/theme/new-theme.qml
 
-# Generates other-theme.qml theme file
-smilemenu -gt -t ~/Documents/other-theme.qml
+# Generates a custom theme file
+smilemenu --gen-theme --theme ~/Documents/other-theme.qml
 ```
 
 

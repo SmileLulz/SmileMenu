@@ -135,7 +135,7 @@ Window {
         radius: root.window_radius
         color: root.background_color
         opacity: 0
-        scale: 0
+        scale: 0.5
         transformOrigin: Item.Center
 
         Behavior on opacity {
@@ -394,7 +394,7 @@ Window {
         NumberAnimation {
             target: container
             property: "scale"
-            to: 0.88
+            to: 0.5
             duration: 180
             easing.type: Easing.OutCubic
         }

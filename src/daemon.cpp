@@ -1,7 +1,7 @@
 #include "daemon.h"
-// #include "model.h"
-// #include "iconprovider.h"
-// #include "config.h"
+#include "model.h"
+#include "iconprovider.h"
+#include "config.h"
 #include <QQmlContext>
 #include <QQuickWindow>
 #include <QLocalSocket>

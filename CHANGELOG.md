@@ -1,4 +1,3 @@
-# Latest changelog (v?.?.?)
+# Latest changelog (v4.0.0)
 
-- Porting to C++
-- Process ongoing...
+- Ported to C++

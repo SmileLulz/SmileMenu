@@ -18,33 +18,24 @@ makedepends=(
     'cmake'
     'make'
     'gcc'
-    'qt6-base'
-    'qt6-declarative'
-    'layer-shell-qt'
 )
 
 source=()
 sha256sums=()
 
 build() {
-    cd "$srcdir/$pkgname-$pkgver"
-
-    mkdir -p build && cd build
-
-    cmake .. \
+    cmake -S "$startdir" -B "$startdir/build" \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_INSTALL_BINDIR=bin \
-        -DBUILD_TESTING=OFF
-    make
+        # -DBUILD_TESTING=OFF
+
+    cmake --build "$startdir/build"
 }
 
 package() {
-    cd "$srcdir/$pkgname-$pkgver/build"
-
-    make DESTDIR="$pkgdir" install
+    DESTDIR="$pkgdir" cmake --install "$startdir/build"
 
     install -Dm644 \
-        "$srcdir/$pkgname-$pkgver/LICENSE" \
+        "$startdir/LICENSE" \
         "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

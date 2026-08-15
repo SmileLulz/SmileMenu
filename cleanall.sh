@@ -1,6 +1,8 @@
 #!/bin/bash
 
-rm -rf build/
+rm -rf build/*
+rm -rf pkg/
+rm -rf src/build/
 rm -f CMakeCache.txt
 rm -rf CMakeFiles/
 rm -f smilemenu-*.pkg.tar.zst

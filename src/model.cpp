@@ -1,8 +1,8 @@
 #include "model.h"
-// #include "launcher.h"
-// #include "history.h"
-// #include "execparser.h"
-// #include "providers.h"
+#include "launcher.h"
+#include "history.h"
+#include "execparser.h"
+#include "providers.h"
 #include <QProcess>
 #include <QDebug>
 #include <QTimer>

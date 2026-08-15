@@ -1,6 +1,6 @@
 #include "launcher.h"
-// #include "desktopentry.h"
-// #include "desktopcache.h"
+#include "desktopentry.h"
+#include "desktopcache.h"
 #include <QDir>
 #include <QDebug>
 
