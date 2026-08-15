@@ -1,48 +1,50 @@
 # Maintainer: SmileLulz <SmileLulz404@noreply.codeberg.org>
 
 pkgname=smilemenu
-pkgver=3.0.0
+pkgver=4.0.0
 pkgrel=1
 pkgdesc="A modern and simple launcher for Linux"
-arch=('any')
+arch=('x86_64')
 url="https://codeberg.org/SmileLulz404/SmileMenu"
 license=('MIT')
 
 depends=(
-    'python'
     'qt6-base'
     'qt6-declarative'
     'layer-shell-qt'
-    'shiboken6'
-    'pyside6'
 )
 
 makedepends=(
-    'python-build'
-    'python-installer'
-    'python-wheel'
-    'python-setuptools'
+    'cmake'
+    'make'
+    'gcc'
+    'qt6-base'
+    'qt6-declarative'
+    'layer-shell-qt'
 )
 
 source=()
 sha256sums=()
 
 build() {
-    cd "$startdir"
+    cd "$srcdir/$pkgname-$pkgver"
 
-    python -m build \
-        --wheel \
-        --no-isolation
+    mkdir -p build && cd build
+
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_BINDIR=bin \
+        -DBUILD_TESTING=OFF
+    make
 }
 
 package() {
-    cd "$startdir"
+    cd "$srcdir/$pkgname-$pkgver/build"
 
-    python -m installer \
-        --destdir="$pkgdir" \
-        dist/*.whl
+    make DESTDIR="$pkgdir" install
 
     install -Dm644 \
-        LICENSE \
+        "$srcdir/$pkgname-$pkgver/LICENSE" \
         "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

@@ -2,7 +2,7 @@
 
 set -e
 
-PYPROJECT="pyproject.toml"
+CMAKEFILE="CMakeLists.txt"
 PKGBUILD="PKGBUILD"
 CHANGELOG="debian/changelog"
 CONTROL="debian/control"
@@ -28,7 +28,7 @@ EOF
 }
 
 get_current_version() {
-    grep -m1 '^version = ' "$PYPROJECT" | cut -d'"' -f2
+    grep -m1 'project(.* VERSION ' "$CMAKEFILE" | sed 's/.*VERSION \([0-9.]*\).*/\1/'
 }
 
 get_pkgname() {
@@ -54,30 +54,38 @@ update_files() {
     local full_version="${new_version}-1"
     local date=$(date -R)
 
-    sed -i "s/^version = \".*\"/version = \"${new_version}\"/" "$PYPROJECT"
-    sed -i "s/^pkgver=.*/pkgver=${new_version}/" "$PKGBUILD"
+    # Update CMakeLists.txt
+    sed -i "s/^project(.* VERSION .*/project(SmileMenu VERSION ${new_version})/" "$CMAKEFILE"
 
+    # Update PKGBUILD
+    sed -i "s/^pkgver=.*/pkgver=${new_version}/" "$PKGBUILD"
     if grep -q '^# Maintainer:' "$PKGBUILD"; then
         sed -i "s/^# Maintainer:.*/# Maintainer: ${PKGBUILD_MAINTAINER}/" "$PKGBUILD"
     fi
 
-    if grep -q '^Maintainer:' "$CONTROL"; then
-        sed -i "s/^Maintainer:.*/Maintainer: ${CONTROL_MAINTAINER}/" "$CONTROL"
+    # Update debian/control (if it exists)
+    if [ -f "$CONTROL" ]; then
+        if grep -q '^Maintainer:' "$CONTROL"; then
+            sed -i "s/^Maintainer:.*/Maintainer: ${CONTROL_MAINTAINER}/" "$CONTROL"
+        fi
     fi
 
-    local new_entry="${pkgname} (${full_version}) unstable; urgency=medium
+    # Update debian/changelog (if it exists)
+    if [ -f "$CHANGELOG" ]; then
+        local new_entry="${pkgname} (${full_version}) unstable; urgency=medium
 
   * Version bump to ${new_version}
 
  -- ${CHANGELOG_MAINTAINER}  ${date}
 
 "
-    echo -e "${new_entry}$(cat "$CHANGELOG")" > "$CHANGELOG"
+        echo -e "${new_entry}$(cat "$CHANGELOG")" > "$CHANGELOG"
+    fi
 
-    echo -e "${GREEN}✓ Updated pyproject.toml${NC}"
+    echo -e "${GREEN}✓ Updated CMakeLists.txt${NC}"
     echo -e "${GREEN}✓ Updated PKGBUILD${NC}"
-    echo -e "${GREEN}✓ Updated debian/control${NC}"
-    echo -e "${GREEN}✓ Updated debian/changelog${NC}"
+    [ -f "$CONTROL" ] && echo -e "${GREEN}✓ Updated debian/control${NC}"
+    [ -f "$CHANGELOG" ] && echo -e "${GREEN}✓ Updated debian/changelog${NC}"
 }
 
 if [[ $# -lt 1 ]]; then

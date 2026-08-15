@@ -13,7 +13,7 @@ Window {
     property real window_radius: 40
     property color background_color: "#1c192b"
 
-    property bool show_text_field: launcher ? launcher.show_text_field : true
+    property bool show_text_field: launcher ? launcher.showTextField : true
 
     property real item_spacing: 0
     property real item_radius_high: 28
@@ -24,8 +24,8 @@ Window {
     property int item_height: 50
     property int item_height_description: 65
 
-    property int min_visible_items: launcher ? launcher.min_visible_items : 1
-    property int max_visible_items: launcher ? launcher.max_visible_items : 6
+    property int min_visible_items: launcher ? launcher.minVisibleItems : 1
+    property int max_visible_items: launcher ? launcher.maxVisibleItems : 6
 
     property int content_margins: 28
     property int content_spacing: 14
@@ -45,7 +45,7 @@ Window {
     visible: true
     color: "transparent"
 
-    width: launcher ? launcher.window_width : 500
+    width: launcher ? launcher.windowWidth : 500
     height: {
         var count = launcher ? launcher.apps.length : 0
 
@@ -81,8 +81,8 @@ Window {
     LayerShellQt.Window.anchors: LayerShellQt.Window.AnchorNone
     LayerShellQt.Window.wantsToBeOnActiveScreen: true
 
-    readonly property bool prompt_exists: launcher && launcher.prompt_text !== ""
-    readonly property string prompt_text: prompt_exists ? launcher.prompt_position_text : ""
+    readonly property bool prompt_exists: launcher && launcher.promptText !== ""
+    readonly property string prompt_text: prompt_exists ? launcher.promptPositionText : ""
 
     FocusScope {
         id: keyboardFocus
@@ -159,7 +159,7 @@ Window {
 
             Text {
                 visible: root.prompt_exists && root.prompt_text === "top"
-                text: launcher ? launcher.prompt_text : ""
+                text: launcher ? launcher.promptText : ""
                 color: root.text_color
                 font.pixelSize: 24
             }
@@ -176,7 +176,7 @@ Window {
                     active: root.prompt_exists && root.prompt_text === "entry"
 
                     sourceComponent: Text {
-                        text: launcher ? launcher.prompt_text : ""
+                        text: launcher ? launcher.promptText : ""
                         color: root.text_color
                         font.pixelSize: 18
                     }
