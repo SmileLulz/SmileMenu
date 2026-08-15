@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     app.setOrganizationName("SmileLulz404");
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("SmileMenu launcher");
+    parser.setApplicationDescription("A modern and simple launcher");
     parser.addHelpOption();
 
     QCommandLineOption daemonOption("daemon", "Run the daemon");
