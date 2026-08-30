@@ -59,7 +59,7 @@ git clone https://codeberg.org/SmileLulz404/SmileMenu.git
 cd SmileMenu
 ```
 
-Build:
+1. Build:
 
 ```sh
 # Prepare
@@ -69,19 +69,15 @@ mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
 
-# Or run the build script
-../build.sh
-
-# Rebuild
+# Or rebuild
 make clean
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
-
-# Or run the rebuild script
-../rebuild.sh
 ```
 
-Run:
+2. Run directly:
+
+> For test and debugging
 
 ```sh
 # Start the daemon
@@ -91,7 +87,9 @@ Run:
 ./smilemenu
 ```
 
-Install with `make` (optional):
+3. (Optional) Install with `make`:
+
+> I recommend build & install for your distro instead
 
 ```sh
 sudo make install
@@ -99,7 +97,7 @@ sudo make install
 
 ### Build for Arch
 
-Dependencies:
+Build dependencies:
 
 - `cmake`
 - `make`

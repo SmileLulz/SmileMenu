@@ -1,3 +1,0 @@
-# Make sure to `mkdir build && cd build` manually
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc)
