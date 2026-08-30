@@ -1,72 +1,76 @@
 #include "providers.h"
 #include <QFileInfo>
-#include <QDebug>
+#include <QDir>
+
+namespace {
+QString displayText(const QString &value)
+{
+    constexpr int kMaxDisplayChars = 4096;
+    if (value.size() <= kMaxDisplayChars)
+        return value;
+    return value.left(kMaxDisplayChars) + QStringLiteral(" …");
+}
+
+void setField(AppItem *item, const QString &key, const QString &value)
+{
+    if (key == "name") item->setName(displayText(value));
+    else if (key == "command") item->setCommand(value);
+    else if (key == "icon") item->setIcon(value);
+    else if (key == "description") item->setDescription(displayText(value));
+}
+}
 
 AppItem* Providers::fromLine(const QString &line, const QStringList &fields)
 {
-    QStringList columns = line.split('\t');
-    QString value = line;
+    const QStringList columns = line.split('\t');
+    const QFileInfo info(line);
 
-    QFileInfo info(value);
-    QString name = info.fileName();
-    QString icon = info.exists() ? value : "";
-    QString desc;
+    auto *item = new AppItem(
+        columns.isEmpty() ? displayText(line) : displayText(columns.first()),
+        line,
+        info.isFile() || info.isDir() ? info.absoluteFilePath() : QString());
 
-    if (!fields.isEmpty()) {
-        for (const QString &field : fields) {
-            QStringList parts = field.split(':');
-            if (parts.size() != 2) continue;
-            QString key = parts[0];
-            QString mode = parts[1];
-            if (mode == "path") {
-                if (key == "name")
-                    name = info.fileName();
-                else if (key == "icon")
-                    icon = value;
-            } else if (mode == "text") {
-                if (key == "name")
-                    name = value;
-                else if (key == "icon")
-                    icon = value;
-            } else if (mode == "none") {
-                if (key == "name")
-                    name = "";
-                else if (key == "icon")
-                    icon = "";
-            } else {
-                bool ok;
-                int idx = mode.toInt(&ok) - 1;
-                if (ok && idx >= 0 && idx < columns.size()) {
-                    if (key == "name")
-                        name = columns[idx];
-                    else if (key == "icon")
-                        icon = columns[idx];
-                    else if (key == "description")
-                        desc = columns[idx];
-                }
-            }
+    if (fields.isEmpty())
+        return item;
+
+    for (const QString &field : fields) {
+        const int separator = field.indexOf(':');
+        if (separator <= 0)
+            continue;
+
+        const QString key = field.left(separator).trimmed().toLower();
+        const QString mode = field.mid(separator + 1).trimmed();
+
+        if (mode == "path") {
+            if (key == "name") setField(item, key, info.fileName());
+            else setField(item, key, line);
+        } else if (mode == "text") {
+            setField(item, key, line);
+        } else if (mode == "none") {
+            setField(item, key, QString());
+        } else {
+            bool ok = false;
+            const int index = mode.toInt(&ok) - 1;
+            if (ok && index >= 0 && index < columns.size())
+                setField(item, key, columns.at(index));
         }
     }
 
-    if (fields.isEmpty()) {
-        name = columns.isEmpty() ? value : columns[0];
-    }
-
-    return new AppItem(name, value, icon, desc);
+    return item;
 }
 
 QString Providers::getDisplayName(const QString &value, const QString &displayColumns)
 {
     if (displayColumns.isEmpty())
         return value;
-    QStringList columns = value.split('\t');
+
+    const QStringList columns = value.split('\t');
     QStringList result;
-    QStringList indices = displayColumns.split(',');
-    for (const QString &idxStr : indices) {
-        bool ok;
-        int idx = idxStr.trimmed().toInt(&ok) - 1;
+    for (const QString &idxStr : displayColumns.split(',')) {
+        bool ok = false;
+        const int idx = idxStr.trimmed().toInt(&ok) - 1;
         if (ok && idx >= 0 && idx < columns.size())
-            result << columns[idx];
+            result << columns.at(idx);
     }
     return result.join('\t');
 }

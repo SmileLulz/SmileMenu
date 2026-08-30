@@ -1,7 +1,7 @@
 # Maintainer: SmileLulz404 <SmileLulz404@noreply.codeberg.org>
 
 pkgname=smilemenu
-pkgver=4.0.1
+pkgver=4.0.2
 pkgrel=1
 pkgdesc="A modern and simple launcher for Linux"
 arch=('x86_64')
@@ -11,6 +11,7 @@ license=('MIT')
 depends=(
     'qt6-base'
     'qt6-declarative'
+    'qt6-5compat'
     'layer-shell-qt'
 )
 

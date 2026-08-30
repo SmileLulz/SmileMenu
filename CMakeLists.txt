@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
-project(SmileMenu VERSION 4.0.1)
+project(SmileMenu VERSION 4.0.2)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network)
+include(GNUInstallDirs)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network 5Compat)
 find_package(LayerShellQt REQUIRED)
+
+qt_standard_project_setup(REQUIRES 6.5)
 
 add_executable(smilemenu
     src/main.cpp
@@ -33,6 +36,7 @@ target_link_libraries(smilemenu PRIVATE
     Qt6::Qml
     Qt6::Quick
     Qt6::Network
+    Qt6::5Compat
     LayerShellQt::Interface
 )
 

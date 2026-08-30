@@ -4,29 +4,31 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDir>
+#include <QSaveFile>
 #include <QDebug>
 #include <QLocalSocket>
 #include <QJsonArray>
-#include <unistd.h>
 #include "config.h"
 #include "lock.h"
 #include "daemon.h"
 #include "desktopentry.h"
 
-static const QString SOCKET_PATH = QString("/tmp/smilemenu-%1.sock").arg(getuid());
+static const QString SOCKET_PATH = Config::runtimeSocketPath();
 
 bool tryConnectToDaemon(QLocalSocket &socket)
 {
     socket.connectToServer(SOCKET_PATH);
-    return socket.waitForConnected(100);
+    return socket.waitForConnected(1000);
 }
 
-void sendRequest(QLocalSocket &socket, const QJsonObject &request)
+bool sendRequest(QLocalSocket &socket, const QJsonObject &request)
 {
-    QByteArray data = QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n';
-    socket.write(data);
-    socket.flush();
-    socket.waitForBytesWritten();
+    const QByteArray data = QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n';
+    if (socket.write(data) != data.size() || !socket.waitForBytesWritten(1000)) {
+        qWarning() << "Failed to send request to daemon:" << socket.errorString();
+        return false;
+    }
+    return true;
 }
 
 int handleDaemonRequest(const QCommandLineParser &parser)
@@ -53,9 +55,9 @@ int handleDaemonRequest(const QCommandLineParser &parser)
     if (parser.isSet("theme"))
         req["theme"] = parser.value("theme");
 
-    sendRequest(socket, req);
+    const bool sent = sendRequest(socket, req);
     socket.disconnectFromServer();
-    return 0;
+    return sent ? 0 : 1;
 }
 
 int main(int argc, char *argv[])
@@ -112,6 +114,23 @@ int main(int argc, char *argv[])
 
     parser.process(app);
 
+    if (parser.isSet(widthOption)) {
+        bool ok = false;
+        const int width = parser.value(widthOption).toInt(&ok);
+        if (!ok || width < 200 || width > 4096) {
+            qCritical() << "--width must be an integer between 200 and 4096";
+            return 2;
+        }
+    }
+    if (parser.isSet(maxItemsOption)) {
+        bool ok = false;
+        const int count = parser.value(maxItemsOption).toInt(&ok);
+        if (!ok || count < 1 || count > 100) {
+            qCritical() << "--max-items must be an integer between 1 and 100";
+            return 2;
+        }
+    }
+
     QString configPath = parser.value(configOption);
     if (configPath.isEmpty())
         configPath = Config::defaultPath();
@@ -138,7 +157,7 @@ int main(int argc, char *argv[])
 
         QDir().mkpath(QFileInfo(themePath).path());
 
-        QFile defaultQml(":/SmileMenu/qml/Main.qml");
+        QFile defaultQml(":/qt/qml/SmileMenu/qml/Main.qml");
         if (!defaultQml.open(QIODevice::ReadOnly)) {
             qCritical() << "Failed to open default QML resource. Make sure the QML module is built.";
             return 1;
@@ -147,13 +166,15 @@ int main(int argc, char *argv[])
         QByteArray content = defaultQml.readAll();
         defaultQml.close();
 
-        QFile out(themePath);
+        QSaveFile out(themePath);
         if (!out.open(QIODevice::WriteOnly)) {
             qCritical() << "Failed to write theme file:" << themePath;
             return 1;
         }
-        out.write(content);
-        out.close();
+        if (out.write(content) != content.size() || !out.commit()) {
+            qCritical() << "Failed to atomically write theme file:" << themePath;
+            return 1;
+        }
 
         qDebug() << "Generated QML theme template:" << themePath;
         return 0;
@@ -161,6 +182,10 @@ int main(int argc, char *argv[])
 
     if (parser.isSet(dcacheOption)) {
         QString type = parser.value(dcacheOption);
+        if (type != "app" && type != "all") {
+            qCritical() << "Invalid --dcache value:" << type;
+            return 2;
+        }
         QDir cacheDir(QDir::homePath() + "/.cache/smilemenu");
         if (type == "app") {
             QString cacheFile = cacheDir.filePath("apps_cache.json");
@@ -181,7 +206,6 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    // --daemon mode
     if (parser.isSet(daemonOption)) {
         SingleInstanceLock lock("smilemenu");
         if (!lock.tryLock()) {
@@ -197,13 +221,12 @@ int main(int argc, char *argv[])
             if (QFile::exists(userTheme))
                 themePath = userTheme;
             else
-                themePath = ":/SmileMenu/qml/Main.qml";
+                themePath = Config::bundledThemePath();
         }
 
         Daemon daemon(config, themePath);
-        return app.exec();
+        return daemon.exec();
     }
 
-    // Client mode: connect to daemon
     return handleDaemonRequest(parser);
 }

@@ -3,13 +3,17 @@
 #include <QPixmap>
 #include <QImage>
 #include <QDir>
+#include <QFileInfo>
 #include <QDebug>
 
 IconProvider::IconProvider(int maxCacheSize)
-    : QQuickImageProvider(QQuickImageProvider::Image), m_maxCacheSize(maxCacheSize)
+    : QQuickImageProvider(QQuickImageProvider::Image),
+      m_maxCacheSize(qMax(1, maxCacheSize))
 {
+    m_cache.setMaxCost(m_maxCacheSize);
+
     QStringList paths = QIcon::themeSearchPaths();
-    QString userPath = QDir::homePath() + "/.local/share/icons";
+    const QString userPath = QDir::homePath() + "/.local/share/icons";
     if (!paths.contains(userPath))
         paths.append(userPath);
     QIcon::setThemeSearchPaths(paths);
@@ -17,46 +21,58 @@ IconProvider::IconProvider(int maxCacheSize)
 
 QImage IconProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
 {
-    if (id.isEmpty()) {
-        QIcon fallback = QIcon::fromTheme("application-x-executable");
-        QPixmap pix = fallback.pixmap(64, 64);
+    Q_UNUSED(requestedSize);
+
+    const QSize fallbackSize(64, 64);
+    auto fallback = [&]() {
+        QIcon fallbackIcon = QIcon::fromTheme("application-x-executable");
+        QPixmap pix = fallbackIcon.pixmap(fallbackSize);
         if (pix.isNull())
-            pix = QPixmap(64, 64);
+            pix = QPixmap(fallbackSize);
         return pix.toImage();
+    };
+
+    if (id.isEmpty()) {
+        const QImage image = fallback();
+        if (size)
+            *size = image.size();
+        return image;
     }
 
-    QString key = id;
-    if (m_cache.contains(key)) {
-        QImage *cached = m_cache[key];
-        if (cached)
-            return *cached;
+    const QString key = id;
+    if (QImage *cached = m_cache.object(key)) {
+        if (size)
+            *size = cached->size();
+        return *cached;
     }
 
     QPixmap pix;
-    QStringList extensions = {"", ".png", ".svg", ".jpg", ".jpeg", ".xpm"};
-    for (const QString &ext : extensions) {
-        QString path = QDir::homePath() + "/.local/share/icons/" + id + ext;
-        if (QFile::exists(path)) {
-            pix.load(path);
-            if (!pix.isNull())
+    const QFileInfo idInfo(id);
+
+    if (idInfo.isAbsolute() && idInfo.isFile())
+        pix.load(idInfo.absoluteFilePath());
+
+    if (pix.isNull()) {
+        const QStringList extensions = {"", ".png", ".svg", ".jpg", ".jpeg", ".xpm"};
+        for (const QString &ext : extensions) {
+            const QString path = QDir::homePath() + "/.local/share/icons/" + id + ext;
+            if (QFileInfo::exists(path) && pix.load(path))
                 break;
         }
     }
 
     if (pix.isNull()) {
-        QIcon icon = QIcon::fromTheme(id);
+        const QIcon icon = QIcon::fromTheme(id);
         if (!icon.isNull())
-            pix = icon.pixmap(64, 64);
+            pix = icon.pixmap(fallbackSize);
     }
 
-    if (pix.isNull()) {
-        QIcon fallback = QIcon::fromTheme("application-x-executable");
-        pix = fallback.pixmap(64, 64);
-        if (pix.isNull())
-            pix = QPixmap(64, 64);
-    }
+    if (pix.isNull())
+        return fallback();
 
-    QImage img = pix.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation).toImage();
-    m_cache.insert(key, new QImage(img));
-    return img;
+    const QImage image = pix.scaled(fallbackSize, Qt::KeepAspectRatio, Qt::SmoothTransformation).toImage();
+    m_cache.insert(key, new QImage(image), 1);
+    if (size)
+        *size = image.size();
+    return image;
 }

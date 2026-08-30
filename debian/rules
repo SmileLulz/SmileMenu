@@ -1,33 +1,7 @@
 #!/usr/bin/make -f
 
 %:
-	dh $@
+	dh $@ --buildsystem=cmake
 
-override_dh_auto_build:
-	python3 -m build --wheel --no-isolation
-
-override_dh_auto_install:
-	rm -rf debian/smilemenu
-
-	python3 -m installer \
-		--destdir=debian/smilemenu \
-		--prefix=/usr \
-		--compile-bytecode=0 \
-		dist/*.whl
-
-	rm -rf debian/smilemenu/usr/local
-
-	mkdir -p debian/smilemenu/usr/bin
-
-	printf '#!/bin/sh\nexec python3 -m smilemenu "$$@"\n' \
-		> debian/smilemenu/usr/bin/smilemenu
-
-	chmod +x debian/smilemenu/usr/bin/smilemenu
-
-override_dh_builddeb:
-	dh_builddeb
-
-override_dh_auto_clean:
-	dh_clean
-	rm -rf dist build *.egg-info
-	rm -f ./smilemenu_*.deb
+override_dh_auto_configure:
+	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release

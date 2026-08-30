@@ -2,6 +2,8 @@
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
+#include <QStandardPaths>
+#include <QLocale>
 
 AppItem* DesktopEntry::fromFile(const QString &path)
 {
@@ -43,7 +45,17 @@ AppItem* DesktopEntry::fromFile(const QString &path)
     if (data.value("NoDisplay").toLower() == "true")
         return nullptr;
 
+    const QString tryExec = data.value("TryExec").trimmed();
+    if (!tryExec.isEmpty() && QStandardPaths::findExecutable(tryExec).isEmpty())
+        return nullptr;
+
     QString name = data.value("Name");
+    const QString locale = QLocale::system().name();
+    const QString language = locale.section('_', 0, 0);
+    if (data.contains("Name[" + locale + "]"))
+        name = data.value("Name[" + locale + "]");
+    else if (data.contains("Name[" + language + "]"))
+        name = data.value("Name[" + language + "]");
     QString command = data.value("Exec");
     QString icon = data.value("Icon");
     QStringList categories = data.value("Categories").split(';', Qt::SkipEmptyParts);

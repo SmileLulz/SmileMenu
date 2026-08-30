@@ -1,7 +1,9 @@
 #pragma once
 #include <QObject>
 #include <QPointer>
+#include <QHash>
 #include <QLocalServer>
+#include <QLocalSocket>
 #include <QQmlApplicationEngine>
 #include "model.h"
 #include "lock.h"
@@ -14,6 +16,7 @@ public:
     ~Daemon();
 
     int exec();
+    bool isReady() const;
 
 private slots:
     void onNewConnection();
@@ -22,10 +25,10 @@ private slots:
 
 private:
     void setupSocketServer();
-    void loadQml(const QString &path);
     void processRequest(const QByteArray &data);
+    void loadBundledOrLocalQml(const QString &path);
+    void resetWindowForShow();
     void showWindow();
-    void hideWindow();
 
     QVariantMap m_config;
     QString m_themePath;
@@ -37,7 +40,7 @@ private:
     QObject *m_rootObject = nullptr;
     QString m_currentQmlPath;
     QMap<QString, qint64> m_themeCache;
+    QHash<QLocalSocket *, QByteArray> m_socketBuffers;
 
     bool m_warmupDone = false;
-    int m_themeCacheLimit;
 };

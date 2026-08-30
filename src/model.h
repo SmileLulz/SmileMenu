@@ -5,6 +5,7 @@
 #include <QVariantMap>
 #include <QProcess>
 #include <QPointer>
+#include <QTimer>
 #include "appitem.h"
 
 class LauncherModel : public QObject
@@ -90,6 +91,10 @@ private:
     QString m_provider;
     QStringList m_fields;
     QPointer<QProcess> m_providerProcess;
+    QPointer<QTimer> m_providerTimeout;
+    QByteArray m_providerOutput;
+    QByteArray m_providerErrorOutput;
+    quint64 m_providerGeneration = 0;
 
     QList<AppItem*> m_allApps;
     QList<AppItem*> m_filtered;

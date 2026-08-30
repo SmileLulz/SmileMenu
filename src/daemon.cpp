@@ -4,7 +4,6 @@
 #include "config.h"
 #include <QQmlContext>
 #include <QQuickWindow>
-#include <QLocalSocket>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -12,32 +11,42 @@
 #include <QTimer>
 #include <QDebug>
 #include <QDir>
+#include <QUrl>
+#include <QCoreApplication>
 #include <unistd.h>
 
+namespace {
+constexpr qsizetype kMaxRequestSize = 1024 * 1024;
+constexpr qint64 kMissingMtime = -1;
+}
+
 Daemon::Daemon(const QVariantMap &config, const QString &themePath, QObject *parent)
-    : QObject(parent), m_config(config), m_themePath(themePath),
-      m_themeCacheLimit(config.value("max_theme_cache_size", 5).toInt())
+    : QObject(parent),
+      m_config(config),
+      m_themePath(themePath.isEmpty() ? Config::bundledThemePath() : themePath)
 {
     m_engine = new QQmlApplicationEngine(this);
 
-    int iconCacheSize = config.value("max_icon_cache_size", 256).toInt();
+    const int iconCacheSize = qMax(1, config.value("max_icon_cache_size", 256).toInt());
     m_engine->addImageProvider("icons", new IconProvider(iconCacheSize));
 
     m_model = new LauncherModel(config, this);
     m_engine->rootContext()->setContextProperty("launcher", m_model);
     m_engine->rootContext()->setContextProperty("preload_mode", true);
 
-    loadQml(m_themePath);
+    loadBundledOrLocalQml(m_themePath);
 
-    QObject *root = m_engine->rootObjects().isEmpty() ? nullptr : m_engine->rootObjects().first();
-    if (root) {
-        QQuickWindow *window = qobject_cast<QQuickWindow*>(root);
-        if (window) {
-            connect(window, &QQuickWindow::frameSwapped, this, &Daemon::onFrameSwapped);
-            // Show window hidden initially
-            window->setVisible(true);
-        }
+    if (!m_rootObject) {
+        qCritical() << "SmileMenu cannot start because the QML root failed to load:" << m_themePath;
+        return;
     }
+
+    if (QQuickWindow *window = qobject_cast<QQuickWindow *>(m_rootObject)) {
+        connect(window, &QQuickWindow::frameSwapped, this, &Daemon::onFrameSwapped);
+        window->show();
+    }
+
+    setupSocketServer();
 }
 
 Daemon::~Daemon()
@@ -49,133 +58,172 @@ void Daemon::onFrameSwapped()
 {
     if (m_warmupDone)
         return;
+
     m_warmupDone = true;
     if (m_rootObject) {
-        QQuickWindow *window = qobject_cast<QQuickWindow*>(m_rootObject);
-        if (window)
+        if (QQuickWindow *window = qobject_cast<QQuickWindow *>(m_rootObject)) {
             disconnect(window, &QQuickWindow::frameSwapped, this, &Daemon::onFrameSwapped);
+            window->hide();
+        } else {
+            m_rootObject->setProperty("visible", false);
+        }
     }
-    if (m_rootObject) {
-        m_rootObject->setProperty("visible", false);
-    }
-    setupSocketServer();
 }
 
 void Daemon::setupSocketServer()
 {
-    QString socketPath = QString("/tmp/smilemenu-%1.sock").arg(getuid());
+    const QString socketPath = Config::runtimeSocketPath();
     QLocalServer::removeServer(socketPath);
+
+    QDir().mkpath(QFileInfo(socketPath).path());
     m_server = new QLocalServer(this);
+    m_server->setSocketOptions(QLocalServer::UserAccessOption);
     if (!m_server->listen(socketPath)) {
-        qCritical() << "Failed to start socket server:" << m_server->errorString();
+        qCritical() << "Failed to start socket server:" << socketPath << m_server->errorString();
+        m_server = nullptr;
         return;
     }
+
     connect(m_server, &QLocalServer::newConnection, this, &Daemon::onNewConnection);
     qDebug() << "Daemon listening on" << socketPath;
 }
 
-void Daemon::loadQml(const QString &path)
+void Daemon::loadBundledOrLocalQml(const QString &path)
 {
-    m_currentQmlPath = path;
-    m_engine->load(QUrl::fromLocalFile(path));
+    const QString normalizedPath = path.isEmpty() ? Config::bundledThemePath() : path;
+    const bool isResource = normalizedPath.startsWith(":/") || normalizedPath.startsWith("qrc:/");
+    const QUrl url = isResource ? QUrl(normalizedPath) : QUrl::fromLocalFile(QFileInfo(normalizedPath).absoluteFilePath());
+
+    m_currentQmlPath = normalizedPath;
+    m_engine->load(url);
     if (m_engine->rootObjects().isEmpty()) {
-        qWarning() << "Failed to load QML:" << path;
+        qWarning() << "Failed to load QML:" << normalizedPath << url;
+        m_rootObject = nullptr;
         return;
     }
-    m_rootObject = m_engine->rootObjects().first();
-    QFileInfo info(path);
-    if (info.exists())
-        m_themeCache[path] = info.lastModified().toSecsSinceEpoch();
+
+    m_rootObject = m_engine->rootObjects().last();
+
+    if (!isResource) {
+        const QFileInfo info(normalizedPath);
+        if (info.exists())
+            m_themeCache[normalizedPath] = info.lastModified().toMSecsSinceEpoch();
+    }
 }
 
 void Daemon::onNewConnection()
 {
-    QLocalSocket *socket = m_server->nextPendingConnection();
-    if (!socket) return;
-    socket->setParent(this);
-    connect(socket, &QLocalSocket::readyRead, [this, socket]() {
-        QByteArray data = socket->readAll();
-        while (data.contains('\n')) {
-            int idx = data.indexOf('\n');
-            QByteArray line = data.left(idx);
-            data.remove(0, idx + 1);
-            processRequest(line);
-        }
-        socket->disconnectFromServer();
-    });
-    connect(socket, &QLocalSocket::disconnected, socket, &QLocalSocket::deleteLater);
+    while (m_server && m_server->hasPendingConnections()) {
+        QLocalSocket *socket = m_server->nextPendingConnection();
+        if (!socket)
+            continue;
+
+        socket->setParent(this);
+        m_socketBuffers.insert(socket, QByteArray());
+
+        connect(socket, &QLocalSocket::readyRead, this, [this, socket]() {
+            QByteArray &buffer = m_socketBuffers[socket];
+            buffer += socket->readAll();
+
+            if (buffer.size() > kMaxRequestSize) {
+                qWarning() << "Rejected oversized IPC request";
+                socket->abort();
+                return;
+            }
+
+            while (true) {
+                const qsizetype newline = buffer.indexOf('\n');
+                if (newline < 0)
+                    break;
+
+                const QByteArray line = buffer.left(newline).trimmed();
+                buffer.remove(0, newline + 1);
+                if (!line.isEmpty())
+                    processRequest(line);
+
+                socket->disconnectFromServer();
+                break;
+            }
+        });
+
+        connect(socket, &QLocalSocket::disconnected, this, [this, socket]() {
+            m_socketBuffers.remove(socket);
+            socket->deleteLater();
+        });
+    }
 }
 
 void Daemon::processRequest(const QByteArray &data)
 {
     QJsonParseError err;
-    QJsonDocument doc = QJsonDocument::fromJson(data, &err);
-    if (err.error != QJsonParseError::NoError) {
-        qWarning() << "Invalid JSON request:" << data;
+    const QJsonDocument doc = QJsonDocument::fromJson(data, &err);
+    if (err.error != QJsonParseError::NoError || !doc.isObject()) {
+        qWarning() << "Invalid JSON request:" << err.errorString();
         return;
     }
-    QJsonObject req = doc.object();
+
+    const QJsonObject req = doc.object();
     if (req.value("action").toString() != "show")
         return;
 
-    m_model->setPromptText("");
-    m_model->setPromptPositionText("entry");
-    m_model->setPlaceholder("Search...");
-    m_model->setWindowWidth(m_config.value("window_width", 500).toInt());
-    m_model->setMaxVisibleItems(m_config.value("max_visible_items", 6).toInt());
-    m_model->setShowTextField(m_config.value("show_text_field", true).toBool());
-    m_model->setProvider("");
-    m_model->setFields(QStringList());
+    m_model->setPromptText(req.value("prompt").toString());
+    m_model->setPromptPositionText(req.value("prompt_position").toString());
+    m_model->setPlaceholder(req.contains("placeholder") ? req.value("placeholder").toString() : QStringLiteral("Search..."));
+    m_model->setWindowWidth(req.contains("width") ? req.value("width").toInt() : m_config.value("window_width", 500).toInt());
+    m_model->setMaxVisibleItems(req.contains("max_items") ? req.value("max_items").toInt() : m_config.value("max_visible_items", 6).toInt());
+    m_model->setShowTextField(!req.value("no_text_field").toBool(false));
+
+    m_model->setProvider(req.value("provider").toString());
+
+    QStringList fields;
+    if (req.value("fields").isArray()) {
+        const QJsonArray arr = req.value("fields").toArray();
+        fields.reserve(arr.size());
+        for (const QJsonValue &v : arr) {
+            if (v.isString())
+                fields.append(v.toString());
+        }
+    }
+    m_model->setFields(fields);
 
     QString requestedTheme = req.value("theme").toString();
     QString qmlPath = requestedTheme.isEmpty() ? m_themePath : requestedTheme;
-    if (qmlPath != m_currentQmlPath) {
-        if (!QFile::exists(qmlPath)) {
-            qmlPath = ":/SmileMenu/Main.qml";
-        }
-        QFileInfo info(qmlPath);
-        qint64 mtime = info.exists() ? info.lastModified().toSecsSinceEpoch() : 0;
-        bool needReload = false;
-        if (qmlPath != m_currentQmlPath) {
-            needReload = true;
-        } else if (m_themeCache.contains(qmlPath) && m_themeCache[qmlPath] != mtime) {
-            needReload = true;
-        }
+    if (qmlPath.isEmpty())
+        qmlPath = Config::bundledThemePath();
 
-        if (needReload) {
-            if (!m_themeCache.contains(qmlPath) && m_themeCache.size() >= m_themeCacheLimit) {
-                m_engine->clearComponentCache();
-                m_themeCache.clear();
-            }
-            loadQml(qmlPath);
-            if (!m_engine->rootObjects().isEmpty()) {
-                m_rootObject = m_engine->rootObjects().first();
-                m_currentQmlPath = qmlPath;
-                m_themeCache[qmlPath] = mtime;
-            }
-        }
+    bool exists = true;
+    qint64 mtime = kMissingMtime;
+    const bool isResource = qmlPath.startsWith(":/") || qmlPath.startsWith("qrc:/");
+    if (!isResource) {
+        const QFileInfo info(qmlPath);
+        exists = info.exists() && info.isFile();
+        if (exists)
+            mtime = info.lastModified().toMSecsSinceEpoch();
     }
 
-    if (req.contains("prompt"))
-        m_model->setPromptText(req["prompt"].toString());
-    if (req.contains("prompt_position"))
-        m_model->setPromptPositionText(req["prompt_position"].toString());
-    if (req.contains("placeholder"))
-        m_model->setPlaceholder(req["placeholder"].toString());
-    if (req.contains("width"))
-        m_model->setWindowWidth(req["width"].toInt());
-    if (req.contains("max_items"))
-        m_model->setMaxVisibleItems(req["max_items"].toInt());
-    if (req.contains("no_text_field"))
-        m_model->setShowTextField(!req["no_text_field"].toBool());
-    if (req.contains("provider"))
-        m_model->setProvider(req["provider"].toString());
-    if (req.contains("fields") && req["fields"].isArray()) {
-        QStringList fields;
-        QJsonArray arr = req["fields"].toArray();
-        for (const QJsonValue &v : arr)
-            fields << v.toString();
-        m_model->setFields(fields);
+    if (!exists) {
+        qWarning() << "Theme does not exist, using bundled theme:" << qmlPath;
+        qmlPath = Config::bundledThemePath();
+        mtime = kMissingMtime;
+    }
+
+    const bool themeChanged = qmlPath != m_currentQmlPath;
+    const bool themeModified = !isResource && !themeChanged && m_themeCache.value(qmlPath, kMissingMtime) != mtime;
+
+    if (themeChanged || themeModified) {
+        if (m_rootObject) {
+            m_rootObject->setProperty("visible", false);
+            delete m_rootObject;
+            m_rootObject = nullptr;
+        }
+
+        m_engine->clearComponentCache();
+        loadBundledOrLocalQml(qmlPath);
+        if (!m_rootObject) {
+            qWarning() << "Theme reload failed; falling back to bundled theme";
+            m_themeCache.clear();
+            loadBundledOrLocalQml(Config::bundledThemePath());
+        }
     }
 
     if (!m_model->provider().isEmpty())
@@ -188,37 +236,49 @@ void Daemon::processRequest(const QByteArray &data)
 
 void Daemon::showWindow()
 {
-    if (!m_rootObject) return;
+    if (!m_rootObject)
+        return;
+
+    resetWindowForShow();
     m_rootObject->setProperty("visible", true);
-    m_rootObject->setProperty("closing", false);
-    QMetaObject::invokeMethod(m_rootObject, "resetAnimation");
-    QQuickWindow *window = qobject_cast<QQuickWindow*>(m_rootObject);
-    if (window) {
+
+    if (QQuickWindow *window = qobject_cast<QQuickWindow *>(m_rootObject)) {
         window->show();
         window->raise();
         window->requestActivate();
     }
 }
 
-void Daemon::hideWindow()
+void Daemon::resetWindowForShow()
 {
-    if (m_rootObject) {
-        m_rootObject->setProperty("visible", false);
-    }
+    if (!m_rootObject)
+        return;
+
+    m_rootObject->setProperty("closing", false);
+    QMetaObject::invokeMethod(m_rootObject, "resetAnimation", Qt::DirectConnection);
+}
+
+bool Daemon::isReady() const
+{
+    return !m_rootObject.isNull() && !m_server.isNull() && m_server->isListening();
 }
 
 int Daemon::exec()
 {
+    if (!isReady())
+        return 1;
     return QGuiApplication::exec();
 }
 
 void Daemon::cleanup()
 {
+    m_socketBuffers.clear();
     if (m_server) {
         m_server->close();
-        delete m_server;
+        m_server->deleteLater();
         m_server = nullptr;
     }
-    QString socketPath = QString("/tmp/smilemenu-%1.sock").arg(getuid());
+
+    const QString socketPath = Config::runtimeSocketPath();
     QLocalServer::removeServer(socketPath);
 }

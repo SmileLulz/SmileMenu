@@ -1,35 +1,35 @@
 #include "execparser.h"
-#include <QRegularExpression>
 #include <QProcess>
+#include <QRegularExpression>
 
 QPair<QString, QStringList> ExecParser::buildCommand(const QString &execLine)
 {
-    if (execLine.isEmpty())
-        return {QString(), QStringList()};
+    if (execLine.trimmed().isEmpty())
+        return {};
 
-    QStringList parts;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 3, 0)
-    parts = QProcess::splitCommand(execLine);
-#else
-    // This is a simplified parser; may replace it with a proper parser in the future
-    parts = execLine.split(QRegularExpression("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)"));
-#endif
+    const QStringList parts = QProcess::splitCommand(execLine);
+    if (parts.isEmpty())
+        return {};
 
-    QString program;
-    QStringList args;
+    QStringList cleanedParts;
+    cleanedParts.reserve(parts.size());
+
+    static const QRegularExpression fieldCode(QStringLiteral("%(?:[fFuUickvm])"));
     for (const QString &part : parts) {
-        if (part == "%%") {
-            args << "%";
+        if (part == QStringLiteral("%%")) {
+            cleanedParts.append(QStringLiteral("%"));
             continue;
         }
+
         QString cleaned = part;
-        cleaned.remove(QRegularExpression("%[fFuUiIckvm]"));
-        if (!cleaned.isEmpty()) {
-            if (program.isEmpty())
-                program = cleaned;
-            else
-                args << cleaned;
-        }
+        cleaned.replace(fieldCode, QString());
+        if (!cleaned.isEmpty())
+            cleanedParts.append(cleaned);
     }
-    return {program, args};
+
+    if (cleanedParts.isEmpty())
+        return {};
+
+    const QString program = cleanedParts.takeFirst();
+    return {program, cleanedParts};
 }

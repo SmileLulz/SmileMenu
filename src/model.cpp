@@ -16,12 +16,12 @@ QList<AppItem*> loadApplications();
 LauncherModel::LauncherModel(const QVariantMap &config, QObject *parent)
     : QObject(parent), m_config(config),
       m_prompt(""), m_promptPosition("entry"), m_placeholder("Search..."),
-      m_windowWidth(config.value("window_width", 500).toInt()),
-      m_maxVisibleItems(config.value("max_visible_items", 6).toInt()),
+      m_windowWidth(qBound(200, config.value("window_width", 500).toInt(), 4096)),
+      m_maxVisibleItems(qBound(1, config.value("max_visible_items", 6).toInt(), 100)),
       m_showTextField(config.value("show_text_field", true).toBool()),
       m_fuzzySearch(config.value("fuzzy_search", true).toBool()),
-      m_historyLimit(config.value("history_limit", 3).toInt()),
-      m_providerProcess(nullptr)
+      m_historyLimit(qMax(0, config.value("history_limit", 3).toInt())),
+      m_providerProcess(nullptr), m_providerTimeout(nullptr)
 {
     m_history = History::load();
     reload();
@@ -30,9 +30,17 @@ LauncherModel::LauncherModel(const QVariantMap &config, QObject *parent)
 LauncherModel::~LauncherModel()
 {
     qDeleteAll(m_allApps);
+    if (m_providerTimeout) {
+        m_providerTimeout->stop();
+        m_providerTimeout->deleteLater();
+        m_providerTimeout = nullptr;
+    }
     if (m_providerProcess) {
-        m_providerProcess->kill();
+        QObject::disconnect(m_providerProcess, nullptr, this, nullptr);
+        if (m_providerProcess->state() != QProcess::NotRunning)
+            m_providerProcess->kill();
         m_providerProcess->deleteLater();
+        m_providerProcess = nullptr;
     }
 }
 
@@ -42,7 +50,10 @@ void LauncherModel::setPromptText(const QString &text) {
 }
 QString LauncherModel::promptPositionText() const { return m_promptPosition; }
 void LauncherModel::setPromptPositionText(const QString &pos) {
-    if (m_promptPosition != pos) { m_promptPosition = pos; emit promptPositionTextChanged(); }
+    QString normalized = pos.trimmed().toLower();
+    if (normalized != "top" && normalized != "entry" && normalized != "hidden")
+        normalized = "entry";
+    if (m_promptPosition != normalized) { m_promptPosition = normalized; emit promptPositionTextChanged(); }
 }
 QString LauncherModel::placeholder() const { return m_placeholder; }
 void LauncherModel::setPlaceholder(const QString &text) {
@@ -50,10 +61,12 @@ void LauncherModel::setPlaceholder(const QString &text) {
 }
 int LauncherModel::windowWidth() const { return m_windowWidth; }
 void LauncherModel::setWindowWidth(int w) {
+    w = qBound(200, w, 4096);
     if (m_windowWidth != w) { m_windowWidth = w; emit windowWidthChanged(); }
 }
 int LauncherModel::maxVisibleItems() const { return m_maxVisibleItems; }
 void LauncherModel::setMaxVisibleItems(int items) {
+    items = qBound(1, items, 100);
     if (m_maxVisibleItems != items) { m_maxVisibleItems = items; emit maxVisibleItemsChanged(); }
 }
 bool LauncherModel::showTextField() const { return m_showTextField; }
@@ -61,7 +74,7 @@ void LauncherModel::setShowTextField(bool show) {
     if (m_showTextField != show) { m_showTextField = show; emit showTextFieldChanged(); }
 }
 int LauncherModel::historyLimit() const { return m_historyLimit; }
-int LauncherModel::minVisibleItems() const { return m_config.value("min_visible_items", 1).toInt(); }
+int LauncherModel::minVisibleItems() const { return qBound(0, m_config.value("min_visible_items", 1).toInt(), 100); }
 
 QVariantList LauncherModel::apps() const {
     return m_appsVariant;
@@ -69,7 +82,23 @@ QVariantList LauncherModel::apps() const {
 
 void LauncherModel::setProvider(const QString &provider)
 {
-    m_provider = provider;
+    const QString normalized = provider.trimmed();
+    if (m_provider == normalized)
+        return;
+
+    ++m_providerGeneration;
+    if (m_providerTimeout)
+        m_providerTimeout->stop();
+    if (m_providerProcess) {
+        QObject::disconnect(m_providerProcess, nullptr, this, nullptr);
+        if (m_providerProcess->state() != QProcess::NotRunning)
+            m_providerProcess->kill();
+        m_providerProcess->deleteLater();
+        m_providerProcess = nullptr;
+    }
+    m_providerOutput.clear();
+    m_providerErrorOutput.clear();
+    m_provider = normalized;
 }
 
 void LauncherModel::setFields(const QStringList &fields)
@@ -176,8 +205,6 @@ void LauncherModel::filterApps(const QString &query)
 void LauncherModel::reload()
 {
     loadAllApps();
-    if (!m_searchText.isEmpty())
-        filterApps(m_searchText);
 }
 
 void LauncherModel::reloadProvider()
@@ -185,34 +212,115 @@ void LauncherModel::reloadProvider()
     if (m_provider.isEmpty())
         return;
 
+    ++m_providerGeneration;
+    const quint64 generation = m_providerGeneration;
+
+    if (m_providerTimeout) {
+        m_providerTimeout->stop();
+        m_providerTimeout->deleteLater();
+        m_providerTimeout = nullptr;
+    }
+
     if (m_providerProcess) {
-        m_providerProcess->kill();
+        QObject::disconnect(m_providerProcess, nullptr, this, nullptr);
+        if (m_providerProcess->state() != QProcess::NotRunning)
+            m_providerProcess->kill();
         m_providerProcess->deleteLater();
         m_providerProcess = nullptr;
     }
 
-    m_providerProcess = new QProcess(this);
-    connect(m_providerProcess, &QProcess::finished, this, &LauncherModel::onProviderFinished);
-    m_providerProcess->start(m_provider, QStringList() << "list");
+    m_providerOutput.clear();
+    m_providerErrorOutput.clear();
+    qDeleteAll(m_allApps);
+    m_allApps.clear();
+    filterApps(m_searchText);
+
+    auto *process = new QProcess(this);
+    m_providerProcess = process;
+    process->setProcessChannelMode(QProcess::SeparateChannels);
+
+    connect(process, &QProcess::readyReadStandardOutput, this, [this, process, generation]() {
+        if (generation != m_providerGeneration || process != m_providerProcess)
+            return;
+        m_providerOutput += process->readAllStandardOutput();
+        constexpr qsizetype kMaxProviderOutput = 16 * 1024 * 1024;
+        if (m_providerOutput.size() > kMaxProviderOutput) {
+            qWarning() << "Provider output exceeded 16 MiB; terminating provider";
+            process->kill();
+        }
+    });
+
+    connect(process, &QProcess::readyReadStandardError, this, [this, process, generation]() {
+        if (generation != m_providerGeneration || process != m_providerProcess)
+            return;
+        m_providerErrorOutput += process->readAllStandardError();
+        constexpr qsizetype kMaxProviderError = 1024 * 1024;
+        if (m_providerErrorOutput.size() > kMaxProviderError)
+            m_providerErrorOutput.truncate(kMaxProviderError);
+    });
+
+    connect(process, &QProcess::errorOccurred, this, [this, process, generation](QProcess::ProcessError error) {
+        if (generation != m_providerGeneration || process != m_providerProcess)
+            return;
+        qWarning() << "Provider process error:" << error << process->errorString();
+    });
+
+    connect(process, qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
+            this, &LauncherModel::onProviderFinished);
+
+    process->start(m_provider, {QStringLiteral("list")});
+
+    auto *timeout = new QTimer(this);
+    m_providerTimeout = timeout;
+    timeout->setSingleShot(true);
+    timeout->setInterval(10000);
+    connect(timeout, &QTimer::timeout, this, [this, process, generation]() {
+        if (generation == m_providerGeneration && process == m_providerProcess && process->state() != QProcess::NotRunning) {
+            qWarning() << "Provider timed out; terminating:" << m_provider;
+            process->kill();
+        }
+    });
+    timeout->start();
 }
 
 void LauncherModel::onProviderFinished(int exitCode, QProcess::ExitStatus status)
 {
-    if (exitCode != 0) {
-        qWarning() << "Provider failed with code" << exitCode;
+    auto *process = qobject_cast<QProcess *>(sender());
+    if (!process || process != m_providerProcess)
+        return;
+
+    if (m_providerTimeout)
+        m_providerTimeout->stop();
+
+    m_providerOutput += process->readAllStandardOutput();
+    m_providerErrorOutput += process->readAllStandardError();
+    const QByteArray errorOutput = m_providerErrorOutput;
+
+    if (status != QProcess::NormalExit || exitCode != 0) {
+        qWarning() << "Provider failed with code" << exitCode << "status" << status;
+        if (!errorOutput.isEmpty())
+            qWarning().noquote() << QString::fromLocal8Bit(errorOutput.left(4096));
         return;
     }
 
-    QByteArray output = m_providerProcess->readAllStandardOutput();
-    QStringList lines = QString::fromUtf8(output).split('\n', Qt::SkipEmptyParts);
     qDeleteAll(m_allApps);
     m_allApps.clear();
 
+    const QStringList lines = QString::fromUtf8(m_providerOutput).split('\n', Qt::SkipEmptyParts);
+    constexpr int kMaxProviderItems = 10000;
+    int itemCount = 0;
     for (const QString &line : lines) {
+        if (itemCount++ >= kMaxProviderItems) {
+            qWarning() << "Provider returned more than 10000 items; remaining entries were ignored";
+            break;
+        }
         AppItem *item = Providers::fromLine(line, m_fields);
-        if (item)
+        if (item && !item->command().isEmpty())
             m_allApps.append(item);
+        else
+            delete item;
     }
+
     filterApps(m_searchText);
 }
 
@@ -225,7 +333,8 @@ void LauncherModel::search(const QString &text)
 void LauncherModel::launch(const QString &command)
 {
     if (!m_provider.isEmpty()) {
-        QProcess::startDetached(m_provider, QStringList() << "run" << command);
+        if (!QProcess::startDetached(m_provider, QStringList() << "run" << command))
+            qWarning() << "Failed to launch provider:" << m_provider;
         return;
     }
 
@@ -234,6 +343,9 @@ void LauncherModel::launch(const QString &command)
 
     auto cmd = ExecParser::buildCommand(command);
     if (!cmd.first.isEmpty()) {
-        QProcess::startDetached(cmd.first, cmd.second);
+        if (!QProcess::startDetached(cmd.first, cmd.second))
+            qWarning() << "Failed to launch application:" << cmd.first;
+    } else {
+        qWarning() << "Invalid desktop Exec command:" << command;
     }
 }

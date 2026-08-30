@@ -46,34 +46,29 @@ Window {
     color: "transparent"
 
     width: launcher ? launcher.windowWidth : 500
-    height: {
+    height: root.contentHeight()
+
+    function contentHeight() {
         var count = launcher ? launcher.apps.length : 0
+        var effectiveMin = Math.min(Math.max(0, min_visible_items), Math.max(0, max_visible_items))
+        var visibleItems = count > 0 ? Math.min(Math.max(effectiveMin, count), max_visible_items) : effectiveMin
+        var h = content_margins * 2
 
-        var visibleItems = Math.max(
-            min_visible_items,
-            Math.min(count, max_visible_items)
-        )
-
-        var height = content_margins * 2
         var hasTopPrompt = root.prompt_exists && root.prompt_text === "top"
         var hasEntryPrompt = root.prompt_exists && root.prompt_text === "entry"
+        if (hasTopPrompt) h += 30 + content_spacing
+        if (root.show_text_field || hasEntryPrompt) h += 50 + content_spacing
 
-        if (hasTopPrompt) {
-            height += 30
-            height += content_spacing
+        var listHeight = 0
+        if (visibleItems > 0) {
+            for (var i = 0; i < visibleItems; ++i) {
+                var app = i < count ? launcher.apps[i] : null
+                listHeight += (app && app.description) ? item_height_description : item_height
+            }
+            listHeight += Math.max(0, visibleItems - 1) * item_spacing
         }
 
-        if (root.show_text_field || hasEntryPrompt) {
-            height += 50
-            height += content_spacing
-        }
-
-        height += (
-            visibleItems * item_height +
-            Math.max(0, visibleItems - 1) * item_spacing
-        )
-
-        return height
+        return h + listHeight
     }
 
     LayerShellQt.Window.layer: LayerShellQt.Window.LayerOverlay
@@ -217,11 +212,14 @@ Window {
                 width: parent.width
                 height: {
                     var count = launcher ? launcher.apps.length : 0
-                    var visibleItems = Math.max(root.min_visible_items, Math.min(count, root.max_visible_items))
-                    return (
-                        visibleItems * item_height +
-                        Math.max(0, visibleItems - 1) * root.item_spacing
-                    )
+                    var effectiveMin = Math.min(Math.max(0, root.min_visible_items), Math.max(0, root.max_visible_items))
+                    var visibleItems = count > 0 ? Math.min(Math.max(effectiveMin, count), root.max_visible_items) : effectiveMin
+                    var total = 0
+                    for (var i = 0; i < visibleItems; ++i) {
+                        var app = i < count ? launcher.apps[i] : null
+                        total += (app && app.description) ? root.item_height_description : root.item_height
+                    }
+                    return total + Math.max(0, visibleItems - 1) * root.item_spacing
                 }
 
                 Rectangle {
@@ -275,6 +273,7 @@ Window {
                         bottomRightRadius: index === list.count - 1 ? root.item_radius_high : root.item_radius_low
 
                         property var command: modelData.command
+                        clip: true
 
                         Row {
                             spacing: 12
@@ -297,10 +296,15 @@ Window {
 
                             Column {
                                 anchors.verticalCenter: parent.verticalCenter
+                                width: Math.max(0, parent.width - 44)
                                 spacing: 2
 
                                 Text {
                                     text: modelData.name
+                                    width: parent.width
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 1
+                                    clip: true
                                     font.pixelSize: root.font_size
                                     color: root.text_color
                                 }
@@ -308,6 +312,10 @@ Window {
                                 Text {
                                     visible: modelData.description && modelData.description !== ""
                                     text: modelData.description
+                                    width: parent.width
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 1
+                                    clip: true
                                     font.pixelSize: root.font_size_secondary
                                     color: root.text_color_secondary
                                 }
@@ -341,6 +349,8 @@ Window {
     }
 
     function resetAnimation() {
+        closeAnimation.stop()
+        closing = false
         container.opacity = 1
         container.scale = 1
     }

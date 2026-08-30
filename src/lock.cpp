@@ -28,7 +28,6 @@ void SingleInstanceLock::release()
     if (m_locked) {
         m_lockFile.unlock();
         m_locked = false;
-        QFile::remove(m_lockFilePath);
     }
 }
 

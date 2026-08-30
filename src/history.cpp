@@ -3,6 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDir>
+#include <QSaveFile>
 
 QString History::filePath()
 {
@@ -16,28 +17,36 @@ QMap<QString, int> History::load()
         return {};
 
     QJsonParseError err;
-    QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &err);
-    if (err.error != QJsonParseError::NoError)
+    const QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &err);
+    if (err.error != QJsonParseError::NoError || !doc.isObject())
         return {};
 
     QMap<QString, int> history;
-    QJsonObject obj = doc.object();
+    const QJsonObject obj = doc.object();
     for (auto it = obj.begin(); it != obj.end(); ++it) {
-        history[it.key()] = it.value().toInt();
+        const int count = it.value().toInt();
+        if (count > 0)
+            history[it.key()] = count;
     }
     return history;
 }
 
 void History::save(const QMap<QString, int> &history)
 {
-    QFile file(filePath());
-    if (!file.open(QIODevice::WriteOnly)) {
-        QDir().mkpath(QFileInfo(filePath()).path());
-        if (!file.open(QIODevice::WriteOnly))
-            return;
-    }
+    const QString path = filePath();
+    QDir().mkpath(QFileInfo(path).path());
+
     QJsonObject obj;
-    for (auto it = history.begin(); it != history.end(); ++it)
-        obj[it.key()] = it.value();
-    file.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
+    for (auto it = history.begin(); it != history.end(); ++it) {
+        if (it.value() > 0)
+            obj[it.key()] = it.value();
+    }
+
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly))
+        return;
+
+    const QByteArray data = QJsonDocument(obj).toJson(QJsonDocument::Indented);
+    if (file.write(data) != data.size() || !file.commit())
+        qWarning("Failed to atomically save SmileMenu history");
 }

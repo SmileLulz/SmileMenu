@@ -38,10 +38,11 @@ Read from [WIKI.md](https://codeberg.org/SmileLulz404/SmileMenu/src/branch/main/
 
 - `qt6-base`
 - `qt6-declarative`
+- `qt6-5compat`
 - `layer-shell-qt`
 
 ```sh
-sudo pacman -S --needed qt6-base qt6-declarative layer-shell-qt
+sudo pacman -S --needed qt6-base qt6-declarative qt6-5compat layer-shell-qt
 ```
 
 

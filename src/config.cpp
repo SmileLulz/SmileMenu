@@ -3,11 +3,27 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDir>
+#include <unistd.h>
 #include <QDebug>
+#include <QStandardPaths>
+#include <QSaveFile>
 
 QString Config::defaultPath()
 {
     return QDir::homePath() + "/.config/smilemenu/config.json";
+}
+
+QString Config::runtimeSocketPath()
+{
+    QString runtime = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+    if (runtime.isEmpty())
+        runtime = QDir::tempPath();
+    return QDir(runtime).filePath(QStringLiteral("smilemenu-%1.sock").arg(QString::number(::getuid())));
+}
+
+QString Config::bundledThemePath()
+{
+    return QStringLiteral("qrc:/qt/qml/SmileMenu/qml/Main.qml");
 }
 
 QVariantMap Config::defaultConfig()
@@ -21,7 +37,6 @@ QVariantMap Config::defaultConfig()
     cfg["fuzzy_search"] = true;
     cfg["show_text_field"] = true;
     cfg["max_icon_cache_size"] = 256;
-    cfg["max_theme_cache_size"] = 5;
     return cfg;
 }
 
@@ -57,13 +72,15 @@ void Config::save(const QVariantMap &config, const QString &path)
 {
     QString p = path.isEmpty() ? defaultPath() : path;
     QDir().mkpath(QFileInfo(p).path());
-    QFile file(p);
+    QSaveFile file(p);
     if (!file.open(QIODevice::WriteOnly)) {
         qWarning() << "Failed to write config to" << p;
         return;
     }
     QJsonObject obj = QJsonObject::fromVariantMap(config);
-    file.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
+    const QByteArray data = QJsonDocument(obj).toJson(QJsonDocument::Indented);
+    if (file.write(data) != data.size() || !file.commit())
+        qWarning() << "Failed to atomically save config to" << p;
 }
 
 void Config::saveDefault(const QString &path)

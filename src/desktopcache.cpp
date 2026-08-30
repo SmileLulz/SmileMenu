@@ -1,14 +1,34 @@
 #include "desktopcache.h"
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDir>
+#include <QSaveFile>
 #include <QDebug>
 
 QString DesktopCache::cacheFilePath()
 {
     return QDir::homePath() + "/.cache/smilemenu/apps_cache.json";
+}
+
+static QJsonObject collectFileMetadata(const QStringList &directories)
+{
+    QJsonObject files;
+    for (const QString &dirPath : directories) {
+        QDir dir(dirPath);
+        if (!dir.exists())
+            continue;
+        const QFileInfoList entries = dir.entryInfoList({"*.desktop"}, QDir::Files | QDir::Readable, QDir::Name);
+        for (const QFileInfo &info : entries) {
+            QJsonObject meta;
+            meta["mtime"] = info.lastModified().toMSecsSinceEpoch();
+            meta["size"] = static_cast<qint64>(info.size());
+            files[info.absoluteFilePath()] = meta;
+        }
+    }
+    return files;
 }
 
 QList<AppItem*> DesktopCache::load(const QStringList &directories, bool &valid)
@@ -19,39 +39,37 @@ QList<AppItem*> DesktopCache::load(const QStringList &directories, bool &valid)
         return {};
 
     QJsonParseError err;
-    QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &err);
-    if (err.error != QJsonParseError::NoError)
+    const QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &err);
+    if (err.error != QJsonParseError::NoError || !doc.isObject())
         return {};
 
-    QJsonObject obj = doc.object();
-    if (obj.value("version").toInt() != 1)
+    const QJsonObject obj = doc.object();
+    if (obj.value("version").toInt() != 2)
         return {};
 
-    QJsonObject dirsObj = obj.value("directories").toObject();
-    for (const QString &dir : directories) {
-        QFileInfo info(dir);
-        if (!info.exists()) {
-            // directory doesn't exist; skipping, but mtime check will fail
-        }
-        qint64 mtime = info.lastModified().toSecsSinceEpoch();
-        if (dirsObj.value(dir).toVariant().toLongLong() != mtime) {
-            return {};
-        }
-    }
+    const QJsonObject expectedFiles = collectFileMetadata(directories);
+    if (obj.value("files").toObject() != expectedFiles)
+        return {};
 
-    QJsonArray itemsArr = obj.value("items").toArray();
+    const QJsonArray itemsArr = obj.value("items").toArray();
     QList<AppItem*> items;
+    items.reserve(itemsArr.size());
     for (const QJsonValue &v : itemsArr) {
-        QJsonObject itemObj = v.toObject();
-        AppItem *item = new AppItem(
-            itemObj.value("name").toString(),
-            itemObj.value("command").toString(),
+        if (!v.isObject())
+            continue;
+        const QJsonObject itemObj = v.toObject();
+        const QString name = itemObj.value("name").toString();
+        const QString command = itemObj.value("command").toString();
+        if (name.isEmpty() || command.isEmpty())
+            continue;
+        items.append(new AppItem(
+            name,
+            command,
             itemObj.value("icon").toString(),
             itemObj.value("description").toString(),
-            itemObj.value("categories").toVariant().toStringList()
-        );
-        items.append(item);
+            itemObj.value("categories").toVariant().toStringList()));
     }
+
     valid = true;
     return items;
 }
@@ -59,18 +77,13 @@ QList<AppItem*> DesktopCache::load(const QStringList &directories, bool &valid)
 void DesktopCache::save(const QStringList &directories, const QList<AppItem*> &items)
 {
     QJsonObject obj;
-    obj["version"] = 1;
-
-    QJsonObject dirsObj;
-    for (const QString &dir : directories) {
-        QFileInfo info(dir);
-        if (info.exists())
-            dirsObj[dir] = info.lastModified().toSecsSinceEpoch();
-    }
-    obj["directories"] = dirsObj;
+    obj["version"] = 2;
+    obj["files"] = collectFileMetadata(directories);
 
     QJsonArray itemsArr;
     for (AppItem *item : items) {
+        if (!item)
+            continue;
         QJsonObject itemObj;
         itemObj["name"] = item->name();
         itemObj["command"] = item->command();
@@ -81,8 +94,12 @@ void DesktopCache::save(const QStringList &directories, const QList<AppItem*> &i
     }
     obj["items"] = itemsArr;
 
-    QFile file(cacheFilePath());
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
-    }
+    const QString path = cacheFilePath();
+    QDir().mkpath(QFileInfo(path).path());
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly))
+        return;
+    const QByteArray data = QJsonDocument(obj).toJson(QJsonDocument::Indented);
+    if (file.write(data) != data.size() || !file.commit())
+        qWarning() << "Failed to save application cache";
 }

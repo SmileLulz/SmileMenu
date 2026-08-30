@@ -3,41 +3,46 @@
 #include "desktopcache.h"
 #include <QDir>
 #include <QDebug>
+#include <QStandardPaths>
 
 QList<AppItem*> loadApplications()
 {
-    QStringList directories = {
-        QDir::homePath() + "/.local/share/applications",
-        "/usr/local/share/applications",
-        "/usr/share/applications",
-        "/var/lib/flatpak/exports/share/applications"
+    QStringList directories = QStandardPaths::standardLocations(QStandardPaths::ApplicationsLocation);
+    const QStringList extraDirectories = {
+        QDir::homePath() + "/.local/share/flatpak/exports/share/applications",
+        "/var/lib/flatpak/exports/share/applications",
+        "/var/lib/snapd/desktop/applications"
     };
+    for (const QString &dir : extraDirectories) {
+        if (!directories.contains(dir))
+            directories.append(dir);
+    }
 
-    bool valid;
-    QList<AppItem*> apps = DesktopCache::load(directories, valid);
-    if (valid && !apps.isEmpty())
-        return apps;
+    directories.removeDuplicates();
+
+    bool valid = false;
+    const QList<AppItem*> cached = DesktopCache::load(directories, valid);
+    if (valid && !cached.isEmpty())
+        return cached;
 
     QMap<QString, AppItem*> appMap;
     for (const QString &dirPath : directories) {
-        QDir dir(dirPath);
+        const QDir dir(dirPath);
         if (!dir.exists())
             continue;
-        QStringList filters;
-        filters << "*.desktop";
-        QFileInfoList entries = dir.entryInfoList(filters, QDir::Files);
+
+        const QFileInfoList entries = dir.entryInfoList({"*.desktop"}, QDir::Files | QDir::Readable, QDir::Name);
         for (const QFileInfo &info : entries) {
-            QString name = info.fileName();
-            if (appMap.contains(name))
+            const QString fileName = info.fileName();
+            if (appMap.contains(fileName))
                 continue;
-            AppItem *item = DesktopEntry::fromFile(info.absoluteFilePath());
-            if (item) {
-                appMap[name] = item;
-            }
+
+            if (AppItem *item = DesktopEntry::fromFile(info.absoluteFilePath()))
+                appMap.insert(fileName, item);
         }
     }
 
-    QList<AppItem*> result = appMap.values();
+    const QList<AppItem*> result = appMap.values();
     DesktopCache::save(directories, result);
     return result;
 }
