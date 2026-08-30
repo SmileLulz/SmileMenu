@@ -2,7 +2,7 @@
 
 pkgname=smilemenu
 pkgver=4.0.2
-pkgrel=1
+pkgrel=2
 pkgdesc="A modern and simple launcher for Linux"
 arch=('x86_64')
 url="https://codeberg.org/SmileLulz404/SmileMenu"
@@ -11,7 +11,6 @@ license=('MIT')
 depends=(
     'qt6-base'
     'qt6-declarative'
-    'qt6-5compat'
     'layer-shell-qt'
 )
 

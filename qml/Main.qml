@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Window
-import Qt5Compat.GraphicalEffects
 import org.kde.layershell as LayerShellQt
 
 Window {
@@ -240,15 +239,6 @@ Window {
                     highlightRangeMode: ListView.ApplyRange
                     preferredHighlightBegin: 0
                     preferredHighlightEnd: height
-
-                    layer.enabled: true
-                    layer.effect: OpacityMask {
-                        maskSource: Rectangle {
-                            width: list.width
-                            height: list.height
-                            radius: root.item_radius_high
-                        }
-                    }
 
                     property int hoveredIndex: -1
 

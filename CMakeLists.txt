@@ -7,10 +7,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 include(GNUInstallDirs)
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network 5Compat)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network)
 find_package(LayerShellQt REQUIRED)
 
 qt_standard_project_setup(REQUIRES 6.5)
+qt_policy(SET QTP0004 NEW)
 
 add_executable(smilemenu
     src/main.cpp
@@ -36,7 +37,6 @@ target_link_libraries(smilemenu PRIVATE
     Qt6::Qml
     Qt6::Quick
     Qt6::Network
-    Qt6::5Compat
     LayerShellQt::Interface
 )
 

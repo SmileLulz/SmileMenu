@@ -260,7 +260,7 @@ void Daemon::resetWindowForShow()
 
 bool Daemon::isReady() const
 {
-    return !m_rootObject.isNull() && !m_server.isNull() && m_server->isListening();
+    return m_rootObject != nullptr && !m_server.isNull() && m_server->isListening();
 }
 
 int Daemon::exec()
