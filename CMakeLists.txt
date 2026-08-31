@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(SmileMenu
-    VERSION 4.1.3
+    VERSION 4.1.4
     LANGUAGES CXX
 )
 

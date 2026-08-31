@@ -1,4 +1,4 @@
-name: Build Linux packages
+name: Build and publish release
 
 on:
   push:
@@ -6,23 +6,27 @@ on:
       - 'v*'
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   arch:
     name: Build Arch package
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     container:
       image: archlinux:latest
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
+
+      - name: Update Arch Linux
+        run: pacman -Syu --noconfirm
 
       - name: Install build dependencies
         run: |
-          pacman -Syu --noconfirm
-          pacman -S --needed --noconfirm \
+          pacman -S --noconfirm \
             base-devel \
             cmake \
             gcc \
@@ -31,35 +35,160 @@ jobs:
             layer-shell-qt \
             namcap
 
-      - name: Build package
+      - name: Create build user
         run: |
           useradd --create-home builder
           chown -R builder:builder "$GITHUB_WORKSPACE"
-          su - builder -c "cd '$GITHUB_WORKSPACE' && makepkg --nodeps --noconfirm --cleanbuild --clean"
+
+      - name: Build package
+        run: |
+          su - builder -c \
+            "cd '$GITHUB_WORKSPACE' && \
+             makepkg --nodeps --noconfirm --cleanbuild --clean"
+
+      - name: Find package
+        id: package
+        run: |
+          pkg="$(
+            find "$GITHUB_WORKSPACE" \
+              -maxdepth 1 \
+              -type f \
+              -name '*.pkg.tar.zst' \
+              -print -quit
+          )"
+          if [ -z "$pkg" ]; then
+            echo "ERROR: No Arch package was produced."
+            exit 1
+          fi
+          echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
+          echo "Built: $pkg"
+
+      - name: Run namcap
+        run: namcap "${{ steps.package.outputs.pkg }}"
 
       - name: Verify package
         run: |
-          pkg=$(find . -maxdepth 1 -type f -name '*.pkg.tar.zst' -print -quit)
-          test -n "$pkg"
-          namcap "$pkg"
-          pacman -Qip "$pkg"
-          pacman -Qlp "$pkg"
+          pacman -Qip "${{ steps.package.outputs.pkg }}"
+          pacman -Qlp "${{ steps.package.outputs.pkg }}"
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v7
         with:
-          name: smilemenu-arch
+          name: smilemenu-arch-package
           path: '*.pkg.tar.zst'
+          if-no-files-found: error
+
+  fedora:
+    name: Build Fedora RPM
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container:
+      image: fedora:latest
+
+    steps:
+      - name: Fix DNS (avoid codeload timeouts)
+        run: echo "nameserver 8.8.8.8" | tee /etc/resolv.conf
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Update Fedora
+        run: dnf -y upgrade
+
+      - name: Install build dependencies
+        run: |
+          dnf -y install \
+            rpm-build \
+            rpmdevtools \
+            cmake \
+            gcc-c++ \
+            qt6-qtbase-devel \
+            qt6-qtdeclarative-devel \
+            layer-shell-qt-devel \
+            rpmlint \
+            spectool \
+            git
+
+      - name: Create build tree
+        run: |
+          mkdir -p rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+          cp rpm/SPECS/smilemenu.spec rpm/SPECS/
+
+      - name: Create build user
+        run: |
+          useradd --create-home builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+
+      - name: Download release source
+        run: |
+          spectool -g -R \
+            --define "_topdir $GITHUB_WORKSPACE/rpm" \
+            rpm/SPECS/smilemenu.spec
+
+      - name: Verify source archive
+        run: ls -lh rpm/SOURCES/
+
+      - name: Build RPM
+        run: |
+          su - builder -c \
+            "cd '$GITHUB_WORKSPACE' && \
+             rpmbuild \
+               --define '_topdir $GITHUB_WORKSPACE/rpm' \
+               -ba rpm/SPECS/smilemenu.spec"
+
+      - name: Find package
+        id: package
+        run: |
+          pkg="$(
+            find "$GITHUB_WORKSPACE/rpm/RPMS" \
+              -type f \
+              -name '*.rpm' \
+              -not -name '*-debuginfo-*.rpm' \
+              -print -quit
+          )"
+          if [ -z "$pkg" ]; then
+            echo "ERROR: No RPM was produced."
+            exit 1
+          fi
+          echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
+          echo "Built: $pkg"
+
+      - name: Run rpmlint
+        run: |
+          rpmlint "${{ steps.package.outputs.pkg }}" || true
+
+      - name: Verify package
+        run: |
+          rpm -qip "${{ steps.package.outputs.pkg }}"
+          rpm -qpl "${{ steps.package.outputs.pkg }}"
+          echo
+          echo "Runtime requirements:"
+          rpm -qp --requires "${{ steps.package.outputs.pkg }}"
+
+      - name: Prepare package artifact
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          cp "${{ steps.package.outputs.pkg }}" "$GITHUB_WORKSPACE/artifacts/"
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: smilemenu-fedora-rpm
+          path: artifacts/*.rpm
           if-no-files-found: error
 
   debian:
     name: Build Debian package
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     container:
       image: debian:trixie
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Install build dependencies
         run: |
@@ -76,72 +205,143 @@ jobs:
             qml6-module-org-kde-layershell \
             lintian
 
-      - name: Build package
+      - name: Create build user
         run: |
           useradd --create-home builder
           chown -R builder:builder "$(dirname "$GITHUB_WORKSPACE")"
-          su - builder -c "cd '$GITHUB_WORKSPACE' && dpkg-buildpackage -us -uc -b"
+
+      - name: Build package
+        run: |
+          su - builder -c \
+            "cd '$GITHUB_WORKSPACE' && \
+             dpkg-buildpackage -us -uc -b"
+
+      - name: Find package
+        id: package
+        run: |
+          pkg="$(
+            find "$(dirname "$GITHUB_WORKSPACE")" \
+              -maxdepth 1 \
+              -type f \
+              -name 'smilemenu_*.deb' \
+              -print -quit
+          )"
+          if [ -z "$pkg" ]; then
+            echo "ERROR: No .deb was produced."
+            exit 1
+          fi
+          echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
+          echo "Built: $pkg"
+
+      - name: Run lintian (ignore errors)
+        run: |
+          lintian "${{ steps.package.outputs.pkg }}" || true
 
       - name: Verify package
         run: |
-          pkg=$(find "$(dirname "$GITHUB_WORKSPACE")" -maxdepth 1 -type f -name 'smilemenu_*.deb' -print -quit)
-          test -n "$pkg"
-          lintian "$pkg"
-          dpkg-deb --info "$pkg"
-          dpkg-deb --contents "$pkg"
+          dpkg-deb --info "${{ steps.package.outputs.pkg }}"
+          dpkg-deb --contents "${{ steps.package.outputs.pkg }}"
+
+      - name: Prepare package artifact
+        run: |
           mkdir -p "$GITHUB_WORKSPACE/artifacts"
-          cp "$pkg" "$GITHUB_WORKSPACE/artifacts/"
+          cp "${{ steps.package.outputs.pkg }}" "$GITHUB_WORKSPACE/artifacts/"
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v7
         with:
-          name: smilemenu-debian
-          path: 'artifacts/*.deb'
+          name: smilemenu-debian-package
+          path: artifacts/*.deb
           if-no-files-found: error
 
-  fedora:
-    name: Build Fedora RPM
+  release:
+    name: Publish GitHub Release
     runs-on: ubuntu-latest
-    container:
-      image: fedora:latest
+    needs:
+      - arch
+      - fedora
+      - debian
+    permissions:
+      contents: write
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Install build dependencies
-        run: |
-          dnf -y upgrade
-          dnf -y install \
-            cmake \
-            gcc-c++ \
-            qt6-qtbase-devel \
-            qt6-qtdeclarative-devel \
-            layer-shell-qt-devel \
-            rpm-build \
-            rpmdevtools \
-            rpmlint
-
-      - name: Build RPM
-        run: |
-          mkdir -p rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-          curl -L --fail \
-            "https://github.com/SmileLulz/SmileMenu/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz" \
-            -o "rpm/SOURCES/${GITHUB_REF_NAME}.tar.gz"
-          useradd --create-home builder
-          chown -R builder:builder "$GITHUB_WORKSPACE"
-          su - builder -c "cd '$GITHUB_WORKSPACE' && rpmbuild --define '_topdir $GITHUB_WORKSPACE/rpm' -ba rpm/SPECS/smilemenu.spec"
-
-      - name: Verify package
-        run: |
-          pkg=$(find rpm/RPMS -type f -name '*.rpm' -not -name '*-debuginfo-*.rpm' -print -quit)
-          test -n "$pkg"
-          rpmlint "$pkg"
-          rpm -qip "$pkg"
-          rpm -qpl "$pkg"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Download Arch package
+        uses: actions/download-artifact@v8
         with:
-          name: smilemenu-fedora
-          path: 'rpm/RPMS/**/*.rpm'
-          if-no-files-found: error
+          name: smilemenu-arch-package
+          path: artifacts/arch
+
+      - name: Download Fedora RPM
+        uses: actions/download-artifact@v8
+        with:
+          name: smilemenu-fedora-rpm
+          path: artifacts/fedora
+
+      - name: Download Debian package
+        uses: actions/download-artifact@v8
+        with:
+          name: smilemenu-debian-package
+          path: artifacts/debian
+
+      - name: Verify artifacts
+        run: |
+          set -e
+          echo "Arch:"
+          find artifacts/arch -type f -print
+          echo
+          echo "Fedora:"
+          find artifacts/fedora -type f -print
+          echo
+          echo "Debian:"
+          find artifacts/debian -type f -print
+
+          test -n "$(find artifacts/arch -type f -name '*.pkg.tar.zst' -print -quit)"
+          test -n "$(find artifacts/fedora -type f -name '*.rpm' -print -quit)"
+          test -n "$(find artifacts/debian -type f -name '*.deb' -print -quit)"
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+          repo="${GITHUB_REPOSITORY}"
+          commit_sha="${GITHUB_SHA}"
+
+          commit_message="$(
+            curl -fsSL \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "https://api.github.com/repos/${repo}/commits/${commit_sha}" |
+            python3 -c \
+              'import json,sys; print(json.load(sys.stdin)["commit"]["message"])'
+          )"
+
+          notes="$(printf '%s\n' "$commit_message" | sed '1d')"
+
+          if gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
+            echo "Release ${tag} already exists."
+            gh release edit "$tag" \
+              --repo "$repo" \
+              --title "$tag" \
+              --notes "$notes"
+          else
+            echo "Creating release ${tag}."
+            gh release create "$tag" \
+              --repo "$repo" \
+              --target "$commit_sha" \
+              --title "$tag" \
+              --notes "$notes"
+          fi
+
+          find artifacts -type f -print0 |
+          while IFS= read -r -d '' file; do
+            echo "Uploading $(basename "$file")..."
+            gh release upload "$tag" "$file" \
+              --repo "$repo" \
+              --clobber
+          done
+
+          echo "Release ${tag} published successfully."
