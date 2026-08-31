@@ -1,5 +1,5 @@
 Name:           smilemenu
-Version:        4.0
+Version:        4.1.b1
 Release:        1%{?dist}
 Summary:        A fast and lightweight application launcher and utility menu
 
@@ -41,10 +41,5 @@ install -Dpm0644 data/metainfo/io.github.SmileLulz.SmileMenu.metainfo.xml \
 %{_metainfodir}/io.github.SmileLulz.SmileMenu.metainfo.xml
 
 %changelog
-* Mon Aug 31 2026 SmileLulz <SmileLulz@users.noreply.github.com> - 4.0-1
-- License changed (permanent)
-- Harden daemon IPC and provider lifecycle
-- Fixed bundled QML resource loading and theme reloads
-- Fixed application cache invalidation and atomic state writes
-- Bound provider output and clipboard display text
-- Fixed Qt6/LayerShell Debian build metadata
+* Mon Aug 31 2026 SmileLulz - 4.1.b1-1
+- Testing

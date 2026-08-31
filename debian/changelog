@@ -1,12 +1,14 @@
-smilemenu (4.0.2-1) unstable; urgency=medium
+smilemenu (4.1.b1-1) unstable; urgency=medium
 
-  * Harden daemon IPC and provider lifecycle.
-  * Fix bundled QML resource loading and theme reloads.
-  * Fix application cache invalidation and atomic state writes.
-  * Bound provider output and clipboard display text.
-  * Fix Qt6/LayerShell Debian build metadata.
+  * Testing
 
- -- SmileLulz404 <SmileLulz404@noreply.codeberg.org>  Mon, 31 Aug 2026 02:40:00 +0530
+ -- SmileLulz <SmileLulz@users.noreply.github.com>  Mon, 31 Aug 2026 06:23:31 +0530
+
+smilemenu (4.0-1) unstable; urgency=medium
+
+  * testing
+
+ -- SmileLulz <SmileLulz@users.noreply.github.com>  Mon, 31 Aug 2026 06:16:05 +0530
 
 smilemenu (4.0.1-1) unstable; urgency=medium
 
