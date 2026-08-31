@@ -1,114 +1,123 @@
-> This project was meant to be a personal project, but I'm sharing anyways. Therefore, I am not accepting any contributions. Thank you.
->
-> Also, if newly installed or modified applications are not executing/launching/showing or not launching correctly, just run `smilemenu --dcache app` or manually delete the cache file (`rm ~/.cache/smilemenu/apps_cache.json`).
+<div align="center">
+  <h1>🚀 SmileMenu 🚀</h1>
+  <h3>A fast and lightweight application launcher and utility menu</h3>
+  <p>SmileMenu is a lightweight app launcher and utility menu for Wayland desktops. It's highly themable, supports custom scripting, and much more.</p>
+  <br></br>
+  <img alt="Screenshot" src="https://raw.githubusercontent.com/SmileLulz/SmileMenu/refs/heads/main/0-Screenshots/0.png" width="80%" />
+  <br></br>
+  <h3><a href="https://github.com/SmileLulz/SmileMPlayer/blob/main/WIKI.md">Wiki</a>  &ensp;&ensp;  <a href="https://github.com/SmileLulz/SmileMPlayer/blob/main/CHANGELOG.md">Changelogs</a></h2>
+</div>
 
+<br></br>
 
-# ❤️ SmileMenu
+> [!NOTE]
+> This project was meant to be a personal project, but I'm feeling happy to share it with others. Therefore, I am not accepting contributions. Thank you. Hope you like this simple utility :)
 
-**A modern and simple launcher for Linux desktops.**
+<br></br>
 
-
-### Features
+# ✨ Features
 
 - Native Qt/QML interface
-- Wayland layer-shell support
-- Dynamic window sizing
-- Desktop application launcher
+- Fully customizable/themable via custom QML(s)
 - Application category searching
-- Recent applications
+- Shows recently used apps by score
 - Fuzzy searching
-- Provider scripting system (`list` / `run`)
-- JSON config and QML theming
-- And many more...
-- See [WIKI.md](https://codeberg.org/SmileLulz404/SmileMenu/src/branch/main/WIKI.md) for everything
+- Custom scripting system (`list` / `run`)
+- And much more...
+- See [Wiki](https://github.com/SmileLulz/SmileMenu/wiki) for more help
 
+**See [CHANGELOG.md](https://github.com/SmileLulz/SmileMenu/blob/main/CHANGELOG.md) for latest update information.**
 
-# 🏞️ Screenshots
+<br></br>
 
-| ![Screenshot 1](https://codeberg.org/SmileLulz404/SmileMenu/raw/branch/main/0-Screenshots/0.png) | ![Screenshot 2](https://codeberg.org/SmileLulz404/SmileMenu/raw/branch/main/0-Screenshots/1.png) |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+# 🔗 Dependencies
 
-
-# ⭐ Usage
-
-Read from [WIKI.md](https://codeberg.org/SmileLulz404/SmileMenu/src/branch/main/WIKI.md).
-
-
-## 📌 Runtime Dependencies (Arch Linux)
-
-- `qt6-base`
-- `qt6-declarative`
-- `qt6-5compat`
-- `layer-shell-qt`
+### Arch Linux
 
 ```sh
-sudo pacman -S --needed qt6-base qt6-declarative qt6-5compat layer-shell-qt
+sudo pacman -S --needed qt6-base qt6-declarative layer-shell-qt
 ```
 
+### Debian
 
-# ⚙️ Build & Installation
+```sh
+sudo apt install qt6-base-dev qt6-declarative-dev layer-shell-qt
+```
 
-**IMPORTANT:** All below guides are wrote for/in Arch Linux only; since I am using Arch.
+### Fedora
+
+```sh
+sudo dnf install qt6-qtbase qt6-qtdeclarative layer-shell-qt
+```
+
+<br></br>
+
+# 📥 Install
+
+### Arch Linux
+
+1. Download the latest `.tar.zst` file from the [Releases](https://github.com/SmileLulz/SmileMenu/releases) page
+2. Install it with `sudo pacman -U /path/to/smilemenu-*.pkg.tar.zst`
+
+### Debian
+
+1. Download the latest `.deb` file from the [Releases](https://github.com/SmileLulz/SmileMenu/releases) page
+2. Install it with `sudo apt install /path/to/smilemenu-*.deb`
+
+### Fedora
+
+1. Download the latest `.rpm` file from the [Releases](https://github.com/SmileLulz/SmileMenu/releases) page
+2. Install it with `sudo dnf install /path/to/smilemenu-*.rpm`
+
+<br></br>
+
+# 📦 Build by yourself
+
+### Clone the repository
+
+```sh
+git clone https://github.com/SmileLulz/SmileMPlayer.git && cd SmileMPlayer
+```
 
 ### Running from source
 
-Clone the repository:
-
-```sh
-git clone https://codeberg.org/SmileLulz404/SmileMenu.git
-cd SmileMenu
-```
+_For test and debugging purposes._
 
 1. Build:
 
 ```sh
-# Prepare
-mkdir build && cd build
-
 # Build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc)
+./build.sh
 
 # Or rebuild
-make clean
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc)
+./rebuild.sh
 ```
 
 2. Run directly:
 
-> For test and debugging
-
 ```sh
 # Start the daemon
-./smilemenu --daemon
+./build/smilemenu --daemon
 
-# Use
-./smilemenu
+# Run
+./build/smilemenu
 ```
 
-3. (Optional) Install with `make`:
+### Build for Arch Linux
 
-> I recommend build & install for your distro instead
+1. Install build dependencies:
 
 ```sh
-sudo make install
+sudo pacman -S --needed cmake gcc
 ```
 
-### Build for Arch
-
-Build dependencies:
-
-- `cmake`
-- `make`
-- `gcc`
+2. Build:
 
 ```sh
-sudo pacman -S --needed cmake make gcc
-```
-
-Build and install:
-
-```sh
+# Build & install
 makepkg -si
+
+# Or build first, then install manually/optionally
+makepkg -s
+sudo pacman -U smilemenu-*.pkg.tar.zst
 ```

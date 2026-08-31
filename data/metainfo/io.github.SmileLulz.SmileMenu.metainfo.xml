@@ -37,8 +37,8 @@
 
     <description>
         <p>
-            SmileMenu is a fast and lightweight application launcher and utility menu for Linux.
-            It provides search, command execution with custom provider scripts and much more.
+            SmileMenu is a lightweight app launcher and utility menu for Wayland desktops.
+            It's highly themable, supports custom scripting, and much more.
         </p>
     </description>
 

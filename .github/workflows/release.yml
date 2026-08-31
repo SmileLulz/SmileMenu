@@ -53,13 +53,16 @@ jobs:
             find "$GITHUB_WORKSPACE" \
               -maxdepth 1 \
               -type f \
-              -name '*.pkg.tar.zst' \
+              -name 'smilemenu-*.pkg.tar.zst' \
+              -not -name 'smilemenu-debug-*.pkg.tar.zst' \
               -print -quit
           )"
+
           if [ -z "$pkg" ]; then
-            echo "ERROR: No Arch package was produced."
+            echo "ERROR: No release Arch package was produced."
             exit 1
           fi
+
           echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
           echo "Built: $pkg"
 
@@ -75,7 +78,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: smilemenu-arch-package
-          path: '*.pkg.tar.zst'
+          path: ${{ steps.package.outputs.pkg }}
           if-no-files-found: error
 
   fedora:
@@ -87,9 +90,6 @@ jobs:
       image: fedora:latest
 
     steps:
-      - name: Fix DNS (avoid codeload timeouts)
-        run: echo "nameserver 8.8.8.8" | tee /etc/resolv.conf
-
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -142,14 +142,17 @@ jobs:
           pkg="$(
             find "$GITHUB_WORKSPACE/rpm/RPMS" \
               -type f \
-              -name '*.rpm' \
+              -name 'smilemenu-[0-9]*.rpm' \
               -not -name '*-debuginfo-*.rpm' \
+              -not -name '*-debugsource-*.rpm' \
               -print -quit
           )"
+
           if [ -z "$pkg" ]; then
-            echo "ERROR: No RPM was produced."
+            echo "ERROR: No release RPM was produced."
             exit 1
           fi
+
           echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
           echo "Built: $pkg"
 
@@ -174,7 +177,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: smilemenu-fedora-rpm
-          path: artifacts/*.rpm
+          path: artifacts/smilemenu-*.rpm
           if-no-files-found: error
 
   debian:
@@ -225,10 +228,12 @@ jobs:
               -name 'smilemenu_*.deb' \
               -print -quit
           )"
+
           if [ -z "$pkg" ]; then
             echo "ERROR: No .deb was produced."
             exit 1
           fi
+
           echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
           echo "Built: $pkg"
 
@@ -250,7 +255,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: smilemenu-debian-package
-          path: artifacts/*.deb
+          path: artifacts/smilemenu_*.deb
           if-no-files-found: error
 
   release:
@@ -285,6 +290,7 @@ jobs:
       - name: Verify artifacts
         run: |
           set -e
+
           echo "Arch:"
           find artifacts/arch -type f -print
           echo
@@ -297,6 +303,20 @@ jobs:
           test -n "$(find artifacts/arch -type f -name '*.pkg.tar.zst' -print -quit)"
           test -n "$(find artifacts/fedora -type f -name '*.rpm' -print -quit)"
           test -n "$(find artifacts/debian -type f -name '*.deb' -print -quit)"
+
+          if find artifacts -type f \( \
+              -name '*-debug-*.pkg.tar.zst' \
+              -o -name '*-debuginfo-*.rpm' \
+              -o -name '*-debugsource-*.rpm' \
+            \) | grep -q .; then
+            echo "ERROR: Debug artifacts were found."
+            find artifacts -type f \( \
+              -name '*-debug-*.pkg.tar.zst' \
+              -o -name '*-debuginfo-*.rpm' \
+              -o -name '*-debugsource-*.rpm' \
+            \)
+            exit 1
+          fi
 
       - name: Create or update GitHub Release
         env:

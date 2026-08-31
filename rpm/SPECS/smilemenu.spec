@@ -1,5 +1,5 @@
 Name:           smilemenu
-Version:        4.1.5
+Version:        4.1.6
 Release:        1%{?dist}
 Summary:        A fast and lightweight application launcher and utility menu
 
@@ -15,6 +15,8 @@ BuildRequires:  layer-shell-qt-devel
 
 Requires:       layer-shell-qt
 Requires:       qt6-qtdeclarative
+
+%global debug_package %{nil}
 
 %description
 SmileMenu is a fast and lightweight application launcher and utility menu.
@@ -41,5 +43,6 @@ install -Dpm0644 data/metainfo/io.github.SmileLulz.SmileMenu.metainfo.xml \
 %{_metainfodir}/io.github.SmileLulz.SmileMenu.metainfo.xml
 
 %changelog
-* Mon Aug 31 2026 SmileLulz - 4.1.5-1
-- Fixing fedora workflow
+* Mon Aug 31 2026 SmileLulz - 4.1.6-1
+- Testing workflow
+- Writing wiki
