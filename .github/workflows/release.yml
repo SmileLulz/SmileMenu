@@ -1,0 +1,147 @@
+name: Build Linux packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  arch:
+    name: Build Arch package
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install build dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --needed --noconfirm \
+            base-devel \
+            cmake \
+            gcc \
+            qt6-base \
+            qt6-declarative \
+            layer-shell-qt \
+            namcap
+
+      - name: Build package
+        run: |
+          useradd --create-home builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          su - builder -c "cd '$GITHUB_WORKSPACE' && makepkg --nodeps --noconfirm --cleanbuild --clean"
+
+      - name: Verify package
+        run: |
+          pkg=$(find . -maxdepth 1 -type f -name '*.pkg.tar.zst' -print -quit)
+          test -n "$pkg"
+          namcap "$pkg"
+          pacman -Qip "$pkg"
+          pacman -Qlp "$pkg"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smilemenu-arch
+          path: '*.pkg.tar.zst'
+          if-no-files-found: error
+
+  debian:
+    name: Build Debian package
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential \
+            ca-certificates \
+            cmake \
+            debhelper-compat \
+            qt6-base-dev \
+            qt6-declarative-dev \
+            liblayershellqtinterface-dev \
+            layer-shell-qt \
+            qml6-module-org-kde-layershell \
+            lintian
+
+      - name: Build package
+        run: |
+          useradd --create-home builder
+          chown -R builder:builder "$(dirname "$GITHUB_WORKSPACE")"
+          su - builder -c "cd '$GITHUB_WORKSPACE' && dpkg-buildpackage -us -uc -b"
+
+      - name: Verify package
+        run: |
+          pkg=$(find "$(dirname "$GITHUB_WORKSPACE")" -maxdepth 1 -type f -name 'smilemenu_*.deb' -print -quit)
+          test -n "$pkg"
+          lintian "$pkg"
+          dpkg-deb --info "$pkg"
+          dpkg-deb --contents "$pkg"
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          cp "$pkg" "$GITHUB_WORKSPACE/artifacts/"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smilemenu-debian
+          path: 'artifacts/*.deb'
+          if-no-files-found: error
+
+  fedora:
+    name: Build Fedora RPM
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install build dependencies
+        run: |
+          dnf -y upgrade
+          dnf -y install \
+            cmake \
+            gcc-c++ \
+            qt6-qtbase-devel \
+            qt6-qtdeclarative-devel \
+            layer-shell-qt-devel \
+            rpm-build \
+            rpmdevtools \
+            rpmlint
+
+      - name: Build RPM
+        run: |
+          mkdir -p rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+          curl -L --fail \
+            "https://github.com/SmileLulz/SmileMenu/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz" \
+            -o "rpm/SOURCES/${GITHUB_REF_NAME}.tar.gz"
+          useradd --create-home builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          su - builder -c "rpmbuild --define '_topdir $GITHUB_WORKSPACE/rpm' -ba rpm/SPECS/smilemenu.spec"
+
+      - name: Verify package
+        run: |
+          pkg=$(find rpm/RPMS -type f -name '*.rpm' -not -name '*-debuginfo-*.rpm' -print -quit)
+          test -n "$pkg"
+          rpmlint "$pkg"
+          rpm -qip "$pkg"
+          rpm -qpl "$pkg"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smilemenu-fedora
+          path: 'rpm/RPMS/**/*.rpm'
+          if-no-files-found: error

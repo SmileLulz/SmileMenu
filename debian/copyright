@@ -1,0 +1,16 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: smilemenu
+Upstream-Contact: SmileLulz <SmileLulz@users.noreply.github.com>
+Source: https://github.com/SmileLulz/SmileMenu
+
+Files: *
+Copyright: 2026 SmileLulz
+License: GPL-3.0-only
+
+Files: debian/*
+Copyright: 2026 SmileLulz
+License: GPL-3.0-only
+
+License: GPL-3.0-only
+ The complete license text is provided in the upstream source tree as
+ the LICENSE file.

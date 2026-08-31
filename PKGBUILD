@@ -1,12 +1,12 @@
-# Maintainer: SmileLulz404 <SmileLulz404@noreply.codeberg.org>
+# Maintainer: SmileLulz <SmileLulz@users.noreply.github.com>
 
 pkgname=smilemenu
-pkgver=4.0.2
-pkgrel=2
-pkgdesc="A modern and simple launcher for Linux"
+pkgver=4.0
+pkgrel=1
+pkgdesc="A fast and lightweight application launcher and utility menu"
 arch=('x86_64')
-url="https://codeberg.org/SmileLulz404/SmileMenu"
-license=('MIT')
+url="https://github.com/SmileLulz/SmileMenu"
+license=('GPL-3.0-only')
 
 depends=(
     'qt6-base'
@@ -16,7 +16,6 @@ depends=(
 
 makedepends=(
     'cmake'
-    'make'
     'gcc'
 )
 
@@ -24,18 +23,19 @@ source=()
 sha256sums=()
 
 build() {
-    cmake -S "$startdir" -B "$startdir/build" \
+    cmake -S . -B build \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        # -DBUILD_TESTING=OFF
+        -DCMAKE_INSTALL_PREFIX=/usr
 
-    cmake --build "$startdir/build"
+    cmake --build build --parallel
 }
 
 package() {
-    DESTDIR="$pkgdir" cmake --install "$startdir/build"
+    DESTDIR="$pkgdir" cmake --install build
 
-    install -Dm644 \
-        "$startdir/LICENSE" \
+    install -Dm644 LICENSE \
         "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+    install -Dm644 data/metainfo/io.github.SmileLulz.SmileMenu.metainfo.xml \
+        "$pkgdir/usr/share/metainfo/io.github.SmileLulz.SmileMenu.metainfo.xml"
 }

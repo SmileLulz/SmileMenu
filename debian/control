@@ -1,16 +1,15 @@
 Source: smilemenu
 Section: utils
 Priority: optional
-Maintainer: SmileLulz404 <SmileLulz404@noreply.codeberg.org>
+Maintainer: SmileLulz <SmileLulz@users.noreply.github.com>
 Build-Depends:
  debhelper-compat (= 13),
  cmake,
  g++,
  qt6-base-dev,
  qt6-declarative-dev,
- qt6-5compat-dev,
  liblayershellqtinterface-dev
-Standards-Version: 4.6.2
+Standards-Version: 4.7.0
 
 Package: smilemenu
 Architecture: any
@@ -18,7 +17,7 @@ Depends:
  ${shlibs:Depends},
  ${misc:Depends},
  layer-shell-qt,
- qml6-module-org-kde-layershell,
- qml6-module-qt5compat-graphicaleffects
-Description: A modern and lightweight Qt launcher
- SmileMenu is a native Qt/QML application launcher for Wayland desktops.
+ qml6-module-org-kde-layershell
+Description: A fast and lightweight application launcher and utility menu.
+ SmileMenu is a fast and lightweight application launcher and utility menu for Linux.
+ It provides search, command execution with custom provider scripts and much more.

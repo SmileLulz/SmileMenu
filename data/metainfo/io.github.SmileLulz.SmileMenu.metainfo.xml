@@ -1,0 +1,48 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>io.github.SmileLulz.SmileMenu</id>
+
+    <name>SmileMenu</name>
+    <summary>A fast and lightweight application launcher and utility menu</summary>
+
+    <developer id="io.github.smilelulz">
+        <name>SmileLulz</name>
+    </developer>
+
+    <metadata_license>CC0-1.0</metadata_license>
+    <project_license>GPL-3.0-only</project_license>
+
+    <url type="homepage">https://github.com/SmileLulz/SmileMenu</url>
+    <url type="bugtracker">https://github.com/SmileLulz/SmileMenu/issues</url>
+    <url type="vcs-browser">https://github.com/SmileLulz/SmileMenu</url>
+
+    <provides>
+        <binary>smilemenu</binary>
+    </provides>
+
+    <categories>
+        <category>Utility</category>
+    </categories>
+
+    <keywords>
+        <keyword>launcher</keyword>
+        <keyword>application</keyword>
+        <keyword>apps</keyword>
+        <keyword>command</keyword>
+        <keyword>clipboard</keyword>
+        <keyword>search</keyword>
+        <keyword>menu</keyword>
+    </keywords>
+
+    <description>
+        <p>
+            SmileMenu is a fast and lightweight application launcher and utility menu for Linux.
+            It provides search, command execution with custom provider scripts and much more.
+        </p>
+    </description>
+
+    <supports>
+        <control>keyboard</control>
+    </supports>
+</component>
