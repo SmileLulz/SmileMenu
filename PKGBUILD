@@ -1,7 +1,7 @@
 # Maintainer: SmileLulz <SmileLulz@users.noreply.github.com>
 
 pkgname=smilemenu
-pkgver=4.1.6
+pkgver=4.2
 pkgrel=1
 pkgdesc="A fast and lightweight application launcher and utility menu"
 arch=('x86_64')

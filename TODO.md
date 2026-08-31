@@ -1,5 +1,5 @@
 # ToDo
 
-- Add an installation script
-- Add 32 bit build support for
+- Add `-v, --version`
+- Add 32 bit build support
 - Close if the user tried opening again while it's already open

@@ -68,7 +68,9 @@ int main(int argc, char *argv[])
 
     QCommandLineParser parser;
     parser.setApplicationDescription("A fast and lightweight application launcher and utility menu");
-    parser.addHelpOption();
+
+    QCommandLineOption helpOption(QStringList() << "h" << "help", "Show help message");
+    parser.addOption(helpOption);
 
     QCommandLineOption daemonOption("daemon", "Run the daemon");
     parser.addOption(daemonOption);
@@ -113,6 +115,10 @@ int main(int argc, char *argv[])
     parser.addOption(dcacheOption);
 
     parser.process(app);
+
+    if (parser.isSet(helpOption)) {
+        parser.showHelp();
+    }
 
     if (parser.isSet(widthOption)) {
         bool ok = false;
