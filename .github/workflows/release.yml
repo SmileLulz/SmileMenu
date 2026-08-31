@@ -129,7 +129,7 @@ jobs:
             -o "rpm/SOURCES/${GITHUB_REF_NAME}.tar.gz"
           useradd --create-home builder
           chown -R builder:builder "$GITHUB_WORKSPACE"
-          su - builder -c "rpmbuild --define '_topdir $GITHUB_WORKSPACE/rpm' -ba rpm/SPECS/smilemenu.spec"
+          su - builder -c "cd '$GITHUB_WORKSPACE' && rpmbuild --define '_topdir $GITHUB_WORKSPACE/rpm' -ba rpm/SPECS/smilemenu.spec"
 
       - name: Verify package
         run: |

@@ -242,19 +242,10 @@ case "$1" in
         ;;
 esac
 
-if [[ "$1" == "-s" || "$1" == "--set" ]]; then
-    # For --set: accept any non-empty version without spaces
-    if [[ -z "$new_version" || "$new_version" =~ [[:space:]] ]]; then
-        echo "${RED}Error: invalid version '$new_version'. Version cannot be empty or contain spaces.${NC}" >&2
-        exit 1
-    fi
-else
-    # For major/minor bumps: require numeric X.Y or X.Y.N
-    validate_version "$new_version" || {
-        echo "${RED}Error: invalid version '$new_version'. Use X.Y or X.Y.N.${NC}" >&2
-        exit 1
-    }
-fi
+validate_version "$new_version" || {
+    echo "${RED}Error: invalid version '$new_version'. Use X.Y or X.Y.N.${NC}" >&2
+    exit 1
+}
 
 validate_changelog "$new_version"
 
