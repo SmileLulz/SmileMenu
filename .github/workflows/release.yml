@@ -113,7 +113,6 @@ jobs:
       - name: Create build tree
         run: |
           mkdir -p rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-          cp rpm/SPECS/smilemenu.spec rpm/SPECS/
 
       - name: Create build user
         run: |
