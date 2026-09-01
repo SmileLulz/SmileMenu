@@ -279,7 +279,7 @@ Window {
                                 width: 32
                                 height: 32
                                 anchors.verticalCenter: parent.verticalCenter
-                                fillMode: Image.PreserveAspectFit
+                                fillMode: Image.PreserveAspectCrop
                                 visible: modelData.icon && modelData.icon !== ""
                                 asynchronous: true
                             }

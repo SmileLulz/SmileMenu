@@ -1,3 +1,12 @@
+smilemenu (4.3-1) unstable; urgency=medium
+
+  * Fixed provider system bugs
+  * Added `--version, -v`
+  * Added short forms for every options/args
+  * Fixed icon preview style
+
+ -- SmileLulz <SmileLulz@users.noreply.github.com>  Tue, 01 Sep 2026 06:36:40 +0530
+
 smilemenu (4.2-1) unstable; urgency=medium
 
   * Updated license

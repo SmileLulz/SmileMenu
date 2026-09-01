@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
     QCommandLineOption versionOption(QStringList() << "version" << "v", "Show current version");
     parser.addOption(versionOption);
 
-    QCommandLineOption daemonOption("daemon", "Run the daemon");
+    QCommandLineOption daemonOption({"daemon", "d"}, "Run the daemon");
     parser.addOption(daemonOption);
 
     QCommandLineOption promptOption({"prompt", "p"}, "Set a custom prompt", "text");
@@ -118,10 +118,10 @@ int main(int argc, char *argv[])
     QCommandLineOption placeholderOption({"placeholder", "ph"}, "Set placeholder text", "text", "Search...");
     parser.addOption(placeholderOption);
 
-    QCommandLineOption providerOption("provider", "Use a provider script", "path");
+    QCommandLineOption providerOption({"provider", "pv"}, "Use a provider script", "path");
     parser.addOption(providerOption);
 
-    QCommandLineOption fieldOption("field", "Set presentation fields (name, icon, description; repeatable)", "field");
+    QCommandLineOption fieldOption({"field", "f"}, "Set presentation fields (name, icon, description; repeatable)", "field");
     parser.addOption(fieldOption);
 
     QCommandLineOption widthOption({"width", "w"}, "Set custom window width", "pixels");
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     QCommandLineOption themeOption({"theme", "t"}, "Use custom QML theme file", "file");
     parser.addOption(themeOption);
 
-    QCommandLineOption dcacheOption("dcache", "Delete cache: 'app' or 'all'", "type");
+    QCommandLineOption dcacheOption({"dcache", "dc"}, "Delete cache: 'app' or 'all'", "type");
     parser.addOption(dcacheOption);
 
     parser.process(app);

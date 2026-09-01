@@ -19,7 +19,7 @@ AppItem *Providers::fromLine(const QString &line, const QStringList &fields)
     const QStringList columns = line.split(QChar('\t'), Qt::KeepEmptyParts);
     const QFileInfo info(line);
 
-    QString name = columns.isEmpty() ? displayText(line) : displayText(columns.first());
+    QString name = line;
     QString icon;
     QString description;
 
