@@ -36,6 +36,7 @@ QVariantMap Config::defaultConfig()
     cfg["max_visible_items"] = 6;
     cfg["fuzzy_search"] = true;
     cfg["show_text_field"] = true;
+    cfg["cycle"] = false;
     cfg["max_icon_cache_size"] = 256;
     return cfg;
 }

@@ -1,5 +1,14 @@
 # Changelogs
 
+### v4.5
+
+- Fixed persistent LayerShell activation from the daemon workspace affecting application launches
+- Split the QML files into modules
+- `--gen-theme` now extracts all the default QML theme files
+- Added optional cyclic keyboard navigation with `cycle: false` by default in config
+- Replaced provider `path` field mode with explicit `file` mode
+- Provider `file` fields now fall back to an empty value for non-file output
+
 ### v4.4
 
 - Fixed debian build support

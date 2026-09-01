@@ -17,14 +17,12 @@ QString displayText(const QString &value)
 AppItem *Providers::fromLine(const QString &line, const QStringList &fields)
 {
     const QStringList columns = line.split(QChar('\t'), Qt::KeepEmptyParts);
-    const QFileInfo info(line);
+    const QFileInfo info(line.trimmed());
+    const bool isFilePath = info.exists() && info.isFile();
 
     QString name = line;
     QString icon;
     QString description;
-
-    if (info.exists())
-        icon = info.absoluteFilePath();
 
     for (const QString &field : fields) {
         const qsizetype separator = field.indexOf(QChar(':'));
@@ -32,7 +30,7 @@ AppItem *Providers::fromLine(const QString &line, const QStringList &fields)
             continue;
 
         const QString key = field.left(separator).trimmed().toLower();
-        const QString mode = field.mid(separator + 1).trimmed();
+        const QString mode = field.mid(separator + 1).trimmed().toLower();
 
         if (key != QStringLiteral("name") &&
             key != QStringLiteral("icon") &&
@@ -40,16 +38,24 @@ AppItem *Providers::fromLine(const QString &line, const QStringList &fields)
             continue;
         }
 
-        if (mode == QStringLiteral("path")) {
-            const QString value = (key == QStringLiteral("name"))
-                ? info.fileName()
-                : line;
+        if (mode == QStringLiteral("file")) {
+            if (!isFilePath) {
+                if (key == QStringLiteral("name"))
+                    name.clear();
+                else if (key == QStringLiteral("icon"))
+                    icon.clear();
+                else
+                    description.clear();
+                continue;
+            }
+
+            const QString filePath = info.absoluteFilePath();
             if (key == QStringLiteral("name"))
-                name = displayText(value);
+                name = displayText(info.fileName());
             else if (key == QStringLiteral("icon"))
-                icon = value;
+                icon = filePath;
             else
-                description = displayText(value);
+                description = displayText(filePath);
         } else if (mode == QStringLiteral("text")) {
             if (key == QStringLiteral("name"))
                 name = displayText(line);

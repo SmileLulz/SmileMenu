@@ -76,6 +76,7 @@ void LauncherModel::setShowTextField(bool show) {
 }
 int LauncherModel::historyLimit() const { return m_historyLimit; }
 int LauncherModel::minVisibleItems() const { return qBound(0, m_config.value("min_visible_items", 1).toInt(), 100); }
+bool LauncherModel::cycle() const { return m_config.value("cycle", false).toBool(); }
 
 QVariantList LauncherModel::apps() const {
     return m_appsVariant;

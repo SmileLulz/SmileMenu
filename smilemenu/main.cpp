@@ -10,6 +10,7 @@
 #include <QDebug>
 #include <QLocalSocket>
 #include <QJsonArray>
+#include <functional>
 #include "config.h"
 #include "lock.h"
 #include "daemon.h"
@@ -121,7 +122,7 @@ int main(int argc, char *argv[])
     QCommandLineOption providerOption({"provider", "pv"}, "Use a provider script", "path");
     parser.addOption(providerOption);
 
-    QCommandLineOption fieldOption({"field", "f"}, "Set presentation fields (name, icon, description; repeatable)", "field");
+    QCommandLineOption fieldOption({"field", "f"}, "Set provider presentation fields (name, icon, description; repeatable)", "field");
     parser.addOption(fieldOption);
 
     QCommandLineOption widthOption({"width", "w"}, "Set custom window width", "pixels");
@@ -136,7 +137,7 @@ int main(int argc, char *argv[])
     QCommandLineOption genConfigOption({"gen-config", "gc"}, "Generate config file");
     parser.addOption(genConfigOption);
 
-    QCommandLineOption genThemeOption({"gen-theme", "gt"}, "Generate QML theme file");
+    QCommandLineOption genThemeOption({"gen-theme", "gt"}, "Generate the default QML theme files");
     parser.addOption(genThemeOption);
 
     QCommandLineOption configOption({"config", "c"}, "Use custom config file", "file");
@@ -191,37 +192,105 @@ int main(int argc, char *argv[])
     }
 
     if (parser.isSet(genThemeOption)) {
-        QString themePath = parser.value(themeOption);
-        if (themePath.isEmpty())
-            themePath = QDir::homePath() + "/.config/smilemenu/theme/Main.qml";
+        QString themeDir = parser.value(themeOption);
+        if (themeDir.isEmpty())
+            themeDir = QDir::homePath() + "/.config/smilemenu/theme";
+        else if (QFileInfo(themeDir).suffix() == QStringLiteral("qml"))
+            themeDir = QFileInfo(themeDir).path();
 
-        if (QFile::exists(themePath)) {
-            qDebug() << "Theme file already exists:" << themePath;
+        QDir dir(themeDir);
+        if (dir.exists() && !dir.entryList(QDir::NoDotAndDotDot | QDir::AllEntries).isEmpty()) {
+            qDebug() << "Theme directory is not empty:" << themeDir;
             return 0;
         }
 
-        QDir().mkpath(QFileInfo(themePath).path());
-
-        QFile defaultQml(":/qt/qml/SmileMenu/qml/Main.qml");
-        if (!defaultQml.open(QIODevice::ReadOnly)) {
-            qCritical() << "Failed to open default QML resource. Make sure the QML module is built.";
+        if (!dir.mkpath(QStringLiteral("."))) {
+            qCritical() << "Failed to create theme directory:" << themeDir;
             return 1;
         }
 
-        QByteArray content = defaultQml.readAll();
-        defaultQml.close();
+        const QString resourceRoot = QStringLiteral(":/qt/qml/SmileMenu/qml");
 
-        QSaveFile out(themePath);
-        if (!out.open(QIODevice::WriteOnly)) {
-            qCritical() << "Failed to write theme file:" << themePath;
+        std::function<bool(const QString &, const QString &)> copyDirectory =
+            [&](const QString &resourceDirPath, const QString &targetDirPath) -> bool {
+                QDir resourceDir(resourceDirPath);
+                if (!resourceDir.exists()) {
+                    qCritical() << "Failed to open bundled QML directory:" << resourceDirPath;
+                    return false;
+                }
+
+                QDir targetDir(targetDirPath);
+                if (!targetDir.exists() && !targetDir.mkpath(QStringLiteral("."))) {
+                    qCritical() << "Failed to create theme directory:" << targetDirPath;
+                    return false;
+                }
+
+                const QFileInfoList entries = resourceDir.entryInfoList(
+                    QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs,
+                    QDir::DirsFirst | QDir::Name);
+
+                for (const QFileInfo &entry : entries) {
+                    const QString name = entry.fileName();
+                    const QString resourcePath = resourceDir.filePath(name);
+                    const QString targetPath = targetDir.filePath(name);
+
+                    if (entry.isDir()) {
+                        if (!copyDirectory(resourcePath, targetPath))
+                            return false;
+                        continue;
+                    }
+
+                    if (!name.endsWith(QStringLiteral(".qml")))
+                        continue;
+
+                    QFile input(resourcePath);
+                    if (!input.open(QIODevice::ReadOnly)) {
+                        qCritical() << "Failed to open default QML resource:" << resourcePath;
+                        return false;
+                    }
+
+                    QSaveFile output(targetPath);
+                    if (!output.open(QIODevice::WriteOnly)) {
+                        qCritical() << "Failed to write theme file:" << targetPath;
+                        return false;
+                    }
+
+                    const QByteArray content = input.readAll();
+                    if (output.write(content) != content.size() || !output.commit()) {
+                        qCritical() << "Failed to atomically write theme file:" << targetPath;
+                        return false;
+                    }
+                }
+
+                return true;
+            };
+
+        if (!copyDirectory(resourceRoot, themeDir))
+            return 1;
+
+        QFile qmldir(dir.filePath(QStringLiteral("qmldir")));
+        if (!qmldir.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            qCritical() << "Failed to write theme qmldir:" << qmldir.fileName();
             return 1;
         }
-        if (out.write(content) != content.size() || !out.commit()) {
-            qCritical() << "Failed to atomically write theme file:" << themePath;
+
+        const QByteArray qmldirContent =
+            "module SmileMenuTheme\n"
+            "singleton Api 1.0 Api.qml\n"
+            "Main 1.0 Main.qml\n"
+            "SearchField 1.0 SearchField.qml\n"
+            "ItemList 1.0 ItemList.qml\n"
+            "MenuItem 1.0 MenuItem.qml\n";
+
+        if (qmldir.write(qmldirContent) != qmldirContent.size()) {
+            qCritical() << "Failed to write theme qmldir:" << qmldir.fileName();
+            qmldir.close();
             return 1;
         }
 
-        qDebug() << "Generated QML theme template:" << themePath;
+        qmldir.close();
+
+        qDebug() << "Generated QML theme directory:" << themeDir;
         return 0;
     }
 

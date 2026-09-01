@@ -27,6 +27,10 @@ Daemon::Daemon(const QVariantMap &config, const QString &themePath, QObject *par
 {
     m_engine = new QQmlApplicationEngine(this);
 
+    const QString userThemeDirectory = QFileInfo(m_themePath).absolutePath();
+    if (!userThemeDirectory.isEmpty() && QFileInfo::exists(userThemeDirectory))
+        m_engine->addImportPath(userThemeDirectory);
+
     const int iconCacheSize = qMax(1, config.value("max_icon_cache_size", 256).toInt());
     m_engine->addImageProvider("icons", new IconProvider(iconCacheSize));
 
@@ -245,8 +249,6 @@ void Daemon::showWindow()
 
     if (QQuickWindow *window = qobject_cast<QQuickWindow *>(m_rootObject)) {
         window->show();
-        window->raise();
-        window->requestActivate();
     }
 }
 

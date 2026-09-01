@@ -22,7 +22,7 @@
 - Application category searching
 - Shows recently used apps by score
 - Fuzzy searching
-- Custom scripting system (`list` / `run`)
+- Provider scripting system (`list` / `run`)
 - And much more...
 - See [Wiki](https://github.com/SmileLulz/SmileMenu/wiki) for more help
 

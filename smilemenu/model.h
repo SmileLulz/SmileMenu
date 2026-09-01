@@ -19,6 +19,7 @@ class LauncherModel : public QObject
     Q_PROPERTY(bool showTextField READ showTextField WRITE setShowTextField NOTIFY showTextFieldChanged)
     Q_PROPERTY(int historyLimit READ historyLimit CONSTANT)
     Q_PROPERTY(int minVisibleItems READ minVisibleItems CONSTANT)
+    Q_PROPERTY(bool cycle READ cycle CONSTANT)
     Q_PROPERTY(QVariantList apps READ apps NOTIFY appsChanged)
 
 public:
@@ -45,6 +46,7 @@ public:
 
     int historyLimit() const;
     int minVisibleItems() const;
+    bool cycle() const;
 
     QVariantList apps() const;
 

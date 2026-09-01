@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(SmileMenu
-    VERSION 4.4
+    VERSION 4.5
     LANGUAGES CXX
 )
 
@@ -27,6 +27,11 @@ find_package(LayerShellQt REQUIRED)
 
 qt_standard_project_setup(REQUIRES 6.5)
 qt_policy(SET QTP0004 NEW)
+
+set_source_files_properties(qml/Api.qml
+    PROPERTIES
+        QT_QML_SINGLETON_TYPE TRUE
+)
 
 qt_add_executable(smilemenu
     smilemenu/main.cpp
@@ -80,7 +85,11 @@ qt6_add_qml_module(smilemenu
     URI SmileMenu
     VERSION 1.0
     QML_FILES
+        qml/Api.qml
+        qml/ItemList.qml
         qml/Main.qml
+        qml/MenuItem.qml
+        qml/SearchField.qml
 )
 
 install(
