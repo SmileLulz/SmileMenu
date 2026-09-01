@@ -174,6 +174,7 @@ void Daemon::processRequest(const QByteArray &data)
     m_model->setShowTextField(!req.value("no_text_field").toBool(false));
 
     m_model->setProvider(req.value("provider").toString());
+    m_model->setProviderWorkingDirectory(req.value("provider_cwd").toString());
 
     QStringList fields;
     if (req.value("fields").isArray()) {

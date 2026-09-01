@@ -4,6 +4,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDir>
+#include <QFileInfo>
+#include <QStandardPaths>
 #include <QSaveFile>
 #include <QDebug>
 #include <QLocalSocket>
@@ -14,6 +16,32 @@
 #include "desktopentry.h"
 
 static const QString SOCKET_PATH = Config::runtimeSocketPath();
+
+static QString resolveProvider(const QString &provider)
+{
+    const QString value = provider.trimmed();
+    if (value.isEmpty())
+        return {};
+
+    const QDir cwd(QDir::currentPath());
+    const QFileInfo input(value);
+
+    if (value.contains('/')) {
+        if (input.isAbsolute())
+            return input.absoluteFilePath();
+        return cwd.absoluteFilePath(value);
+    }
+
+    const QFileInfo local(cwd.filePath(value));
+    if (local.exists() && local.isFile())
+        return local.absoluteFilePath();
+
+    const QString executable = QStandardPaths::findExecutable(value);
+    if (!executable.isEmpty())
+        return executable;
+
+    return value;
+}
 
 bool tryConnectToDaemon(QLocalSocket &socket)
 {
@@ -44,7 +72,8 @@ int handleDaemonRequest(const QCommandLineParser &parser)
     req["prompt"] = parser.value("prompt");
     req["prompt_position"] = parser.value("prompt-position");
     req["placeholder"] = parser.value("placeholder");
-    req["provider"] = parser.value("provider");
+    req["provider"] = resolveProvider(parser.value("provider"));
+    req["provider_cwd"] = QDir::currentPath();
     req["fields"] = QJsonArray::fromStringList(parser.values("field"));
     if (parser.isSet("width"))
         req["width"] = parser.value("width").toInt();
@@ -64,51 +93,56 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     app.setApplicationName("smilemenu");
-    app.setOrganizationName("SmileLulz404");
+    app.setOrganizationName("SmileLulz");
+    QCoreApplication::setApplicationVersion(SMILEMENU_VERSION);
 
     QCommandLineParser parser;
+
     parser.setApplicationDescription("A fast and lightweight application launcher and utility menu");
 
-    QCommandLineOption helpOption(QStringList() << "h" << "help", "Show help message");
+    QCommandLineOption helpOption(QStringList() << "help" << "h", "Show help message");
     parser.addOption(helpOption);
+
+    QCommandLineOption versionOption(QStringList() << "version" << "v", "Show current version");
+    parser.addOption(versionOption);
 
     QCommandLineOption daemonOption("daemon", "Run the daemon");
     parser.addOption(daemonOption);
 
-    QCommandLineOption promptOption({"p", "prompt"}, "Set a custom prompt", "text");
+    QCommandLineOption promptOption({"prompt", "p"}, "Set a custom prompt", "text");
     parser.addOption(promptOption);
 
-    QCommandLineOption promptPosOption({"pp", "prompt-position"}, "Prompt position (top, entry, hidden)", "pos", "entry");
+    QCommandLineOption promptPosOption({"prompt-position", "pp"}, "Prompt position (top, entry, hidden)", "pos", "entry");
     parser.addOption(promptPosOption);
 
-    QCommandLineOption placeholderOption({"ph", "placeholder"}, "Set placeholder text", "text", "Search...");
+    QCommandLineOption placeholderOption({"placeholder", "ph"}, "Set placeholder text", "text", "Search...");
     parser.addOption(placeholderOption);
 
     QCommandLineOption providerOption("provider", "Use a provider script", "path");
     parser.addOption(providerOption);
 
-    QCommandLineOption fieldOption("field", "Set fields as custom modes (can be repeated)", "field");
+    QCommandLineOption fieldOption("field", "Set presentation fields (name, icon, description; repeatable)", "field");
     parser.addOption(fieldOption);
 
-    QCommandLineOption widthOption({"w", "width"}, "Set custom window width", "pixels");
+    QCommandLineOption widthOption({"width", "w"}, "Set custom window width", "pixels");
     parser.addOption(widthOption);
 
-    QCommandLineOption noTextFieldOption({"ntf", "no-text-field"}, "Hide the text field");
+    QCommandLineOption noTextFieldOption({"no-text-field", "ntf"}, "Hide the text field");
     parser.addOption(noTextFieldOption);
 
-    QCommandLineOption maxItemsOption({"mi", "max-items"}, "Set max visible items", "count");
+    QCommandLineOption maxItemsOption({"max-items", "mi"}, "Set max visible items", "count");
     parser.addOption(maxItemsOption);
 
-    QCommandLineOption genConfigOption({"gc", "gen-config"}, "Generate config file");
+    QCommandLineOption genConfigOption({"gen-config", "gc"}, "Generate config file");
     parser.addOption(genConfigOption);
 
-    QCommandLineOption genThemeOption({"gt", "gen-theme"}, "Generate QML theme file");
+    QCommandLineOption genThemeOption({"gen-theme", "gt"}, "Generate QML theme file");
     parser.addOption(genThemeOption);
 
-    QCommandLineOption configOption({"c", "config"}, "Use custom config file", "file");
+    QCommandLineOption configOption({"config", "c"}, "Use custom config file", "file");
     parser.addOption(configOption);
 
-    QCommandLineOption themeOption({"t", "theme"}, "Use custom QML theme file", "file");
+    QCommandLineOption themeOption({"theme", "t"}, "Use custom QML theme file", "file");
     parser.addOption(themeOption);
 
     QCommandLineOption dcacheOption("dcache", "Delete cache: 'app' or 'all'", "type");
@@ -118,6 +152,11 @@ int main(int argc, char *argv[])
 
     if (parser.isSet(helpOption)) {
         parser.showHelp();
+    }
+
+    if (parser.isSet(versionOption)) {
+        qInfo().noquote() << "SmileMenu" << QCoreApplication::applicationVersion();
+        return 0;
     }
 
     if (parser.isSet(widthOption)) {

@@ -49,6 +49,7 @@ public:
     QVariantList apps() const;
 
     void setProvider(const QString &provider);
+    void setProviderWorkingDirectory(const QString &directory);
     void setFields(const QStringList &fields);
 
     QString provider() const { return m_provider; }
@@ -89,6 +90,7 @@ private:
     int m_historyLimit;
 
     QString m_provider;
+    QString m_providerWorkingDirectory;
     QStringList m_fields;
     QPointer<QProcess> m_providerProcess;
     QPointer<QTimer> m_providerTimeout;

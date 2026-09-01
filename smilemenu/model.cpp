@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QTimer>
 #include <QDir>
+#include <QFileInfo>
 #include <QtGlobal>
 #include <unistd.h>
 #include <algorithm>
@@ -87,8 +88,11 @@ void LauncherModel::setProvider(const QString &provider)
         return;
 
     ++m_providerGeneration;
-    if (m_providerTimeout)
+    if (m_providerTimeout) {
         m_providerTimeout->stop();
+        m_providerTimeout->deleteLater();
+        m_providerTimeout = nullptr;
+    }
     if (m_providerProcess) {
         QObject::disconnect(m_providerProcess, nullptr, this, nullptr);
         if (m_providerProcess->state() != QProcess::NotRunning)
@@ -96,9 +100,23 @@ void LauncherModel::setProvider(const QString &provider)
         m_providerProcess->deleteLater();
         m_providerProcess = nullptr;
     }
+
     m_providerOutput.clear();
     m_providerErrorOutput.clear();
     m_provider = normalized;
+}
+
+void LauncherModel::setProviderWorkingDirectory(const QString &directory)
+{
+    QString normalized = directory.trimmed();
+    if (normalized.isEmpty())
+        normalized = QDir::homePath();
+
+    const QFileInfo info(normalized);
+    if (info.exists() && info.isDir())
+        m_providerWorkingDirectory = info.absoluteFilePath();
+    else
+        m_providerWorkingDirectory = QDir::homePath();
 }
 
 void LauncherModel::setFields(const QStringList &fields)
@@ -238,31 +256,56 @@ void LauncherModel::reloadProvider()
     auto *process = new QProcess(this);
     m_providerProcess = process;
     process->setProcessChannelMode(QProcess::SeparateChannels);
+    process->setWorkingDirectory(m_providerWorkingDirectory);
 
-    connect(process, &QProcess::readyReadStandardOutput, this, [this, process, generation]() {
+    connect(process, &QProcess::readyReadStandardOutput, this,
+            [this, process, generation]() {
         if (generation != m_providerGeneration || process != m_providerProcess)
             return;
+
         m_providerOutput += process->readAllStandardOutput();
         constexpr qsizetype kMaxProviderOutput = 16 * 1024 * 1024;
         if (m_providerOutput.size() > kMaxProviderOutput) {
-            qWarning() << "Provider output exceeded 16 MiB; terminating provider";
+            qWarning() << "Provider output exceeded 16 MiB; terminating provider:" << m_provider;
             process->kill();
         }
     });
 
-    connect(process, &QProcess::readyReadStandardError, this, [this, process, generation]() {
+    connect(process, &QProcess::readyReadStandardError, this,
+            [this, process, generation]() {
         if (generation != m_providerGeneration || process != m_providerProcess)
             return;
-        m_providerErrorOutput += process->readAllStandardError();
+
         constexpr qsizetype kMaxProviderError = 1024 * 1024;
+        m_providerErrorOutput += process->readAllStandardError();
         if (m_providerErrorOutput.size() > kMaxProviderError)
-            m_providerErrorOutput.truncate(kMaxProviderError);
+            m_providerErrorOutput = m_providerErrorOutput.left(kMaxProviderError);
     });
 
-    connect(process, &QProcess::errorOccurred, this, [this, process, generation](QProcess::ProcessError error) {
+    connect(process, &QProcess::errorOccurred, this,
+            [this, process, generation](QProcess::ProcessError error) {
         if (generation != m_providerGeneration || process != m_providerProcess)
             return;
-        qWarning() << "Provider process error:" << error << process->errorString();
+
+        qWarning() << "Provider process error:" << error
+                   << process->errorString()
+                   << "provider:" << m_provider;
+
+        if (error == QProcess::FailedToStart) {
+            if (m_providerTimeout) {
+                m_providerTimeout->stop();
+                m_providerTimeout->deleteLater();
+                m_providerTimeout = nullptr;
+            }
+
+            process->deleteLater();
+            m_providerProcess = nullptr;
+            m_providerOutput.clear();
+            m_providerErrorOutput.clear();
+            qDeleteAll(m_allApps);
+            m_allApps.clear();
+            filterApps(m_searchText);
+        }
     });
 
     connect(process, qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
@@ -274,12 +317,18 @@ void LauncherModel::reloadProvider()
     m_providerTimeout = timeout;
     timeout->setSingleShot(true);
     timeout->setInterval(10000);
-    connect(timeout, &QTimer::timeout, this, [this, process, generation]() {
-        if (generation == m_providerGeneration && process == m_providerProcess && process->state() != QProcess::NotRunning) {
-            qWarning() << "Provider timed out; terminating:" << m_provider;
+
+    connect(timeout, &QTimer::timeout, this,
+            [this, process, generation]() {
+        if (generation != m_providerGeneration || process != m_providerProcess)
+            return;
+
+        if (process->state() != QProcess::NotRunning) {
+            qWarning() << "Provider timed out after 10 seconds; terminating:" << m_provider;
             process->kill();
         }
     });
+
     timeout->start();
 }
 
@@ -297,23 +346,41 @@ void LauncherModel::onProviderFinished(int exitCode, QProcess::ExitStatus status
     const QByteArray errorOutput = m_providerErrorOutput;
 
     if (status != QProcess::NormalExit || exitCode != 0) {
-        qWarning() << "Provider failed with code" << exitCode << "status" << status;
+        qWarning() << "Provider failed with code" << exitCode << "status" << status
+                   << "provider:" << m_provider;
         if (!errorOutput.isEmpty())
             qWarning().noquote() << QString::fromLocal8Bit(errorOutput.left(4096));
+
+        process->deleteLater();
+        m_providerProcess = nullptr;
+        m_providerOutput.clear();
+        m_providerErrorOutput.clear();
+        qDeleteAll(m_allApps);
+        m_allApps.clear();
+        filterApps(m_searchText);
         return;
     }
 
     qDeleteAll(m_allApps);
     m_allApps.clear();
 
-    const QStringList lines = QString::fromUtf8(m_providerOutput).split('\n', Qt::SkipEmptyParts);
+    const QList<QByteArray> rawLines = m_providerOutput.split('\n');
     constexpr int kMaxProviderItems = 10000;
     int itemCount = 0;
-    for (const QString &line : lines) {
+
+    for (QByteArray rawLine : rawLines) {
+        if (rawLine.endsWith('\r'))
+            rawLine.chop(1);
+
+        if (rawLine.isEmpty())
+            continue;
+
         if (itemCount++ >= kMaxProviderItems) {
             qWarning() << "Provider returned more than 10000 items; remaining entries were ignored";
             break;
         }
+
+        const QString line = QString::fromUtf8(rawLine);
         AppItem *item = Providers::fromLine(line, m_fields);
         if (item && !item->command().isEmpty())
             m_allApps.append(item);
@@ -321,6 +388,8 @@ void LauncherModel::onProviderFinished(int exitCode, QProcess::ExitStatus status
             delete item;
     }
 
+    m_providerProcess->deleteLater();
+    m_providerProcess = nullptr;
     filterApps(m_searchText);
 }
 
@@ -333,8 +402,20 @@ void LauncherModel::search(const QString &text)
 void LauncherModel::launch(const QString &command)
 {
     if (!m_provider.isEmpty()) {
-        if (!QProcess::startDetached(m_provider, QStringList() << "run" << command))
-            qWarning() << "Failed to launch provider:" << m_provider;
+        qint64 pid = 0;
+        const bool started = QProcess::startDetached(
+            m_provider,
+            {QStringLiteral("run"), command},
+            m_providerWorkingDirectory,
+            &pid);
+
+        if (!started) {
+            qWarning() << "Failed to launch provider run:" << m_provider
+                       << "working directory:" << m_providerWorkingDirectory;
+        } else {
+            qDebug() << "Provider run started:" << m_provider
+                     << "pid:" << pid;
+        }
         return;
     }
 

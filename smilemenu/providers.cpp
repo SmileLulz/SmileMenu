@@ -1,76 +1,102 @@
 #include "providers.h"
+
 #include <QFileInfo>
-#include <QDir>
 
 namespace {
+constexpr int kMaxDisplayChars = 4096;
+
 QString displayText(const QString &value)
 {
-    constexpr int kMaxDisplayChars = 4096;
     if (value.size() <= kMaxDisplayChars)
         return value;
     return value.left(kMaxDisplayChars) + QStringLiteral(" …");
 }
 
-void setField(AppItem *item, const QString &key, const QString &value)
-{
-    if (key == "name") item->setName(displayText(value));
-    else if (key == "command") item->setCommand(value);
-    else if (key == "icon") item->setIcon(value);
-    else if (key == "description") item->setDescription(displayText(value));
-}
 }
 
-AppItem* Providers::fromLine(const QString &line, const QStringList &fields)
+AppItem *Providers::fromLine(const QString &line, const QStringList &fields)
 {
-    const QStringList columns = line.split('\t');
+    const QStringList columns = line.split(QChar('\t'), Qt::KeepEmptyParts);
     const QFileInfo info(line);
 
-    auto *item = new AppItem(
-        columns.isEmpty() ? displayText(line) : displayText(columns.first()),
-        line,
-        info.isFile() || info.isDir() ? info.absoluteFilePath() : QString());
+    QString name = columns.isEmpty() ? displayText(line) : displayText(columns.first());
+    QString icon;
+    QString description;
 
-    if (fields.isEmpty())
-        return item;
+    if (info.exists())
+        icon = info.absoluteFilePath();
 
     for (const QString &field : fields) {
-        const int separator = field.indexOf(':');
+        const qsizetype separator = field.indexOf(QChar(':'));
         if (separator <= 0)
             continue;
 
         const QString key = field.left(separator).trimmed().toLower();
         const QString mode = field.mid(separator + 1).trimmed();
 
-        if (mode == "path") {
-            if (key == "name") setField(item, key, info.fileName());
-            else setField(item, key, line);
-        } else if (mode == "text") {
-            setField(item, key, line);
-        } else if (mode == "none") {
-            setField(item, key, QString());
+        if (key != QStringLiteral("name") &&
+            key != QStringLiteral("icon") &&
+            key != QStringLiteral("description")) {
+            continue;
+        }
+
+        if (mode == QStringLiteral("path")) {
+            const QString value = (key == QStringLiteral("name"))
+                ? info.fileName()
+                : line;
+            if (key == QStringLiteral("name"))
+                name = displayText(value);
+            else if (key == QStringLiteral("icon"))
+                icon = value;
+            else
+                description = displayText(value);
+        } else if (mode == QStringLiteral("text")) {
+            if (key == QStringLiteral("name"))
+                name = displayText(line);
+            else if (key == QStringLiteral("icon"))
+                icon = line;
+            else
+                description = displayText(line);
+        } else if (mode == QStringLiteral("none")) {
+            if (key == QStringLiteral("name"))
+                name.clear();
+            else if (key == QStringLiteral("icon"))
+                icon.clear();
+            else
+                description.clear();
         } else {
             bool ok = false;
-            const int index = mode.toInt(&ok) - 1;
-            if (ok && index >= 0 && index < columns.size())
-                setField(item, key, columns.at(index));
+            const int column = mode.toInt(&ok) - 1;
+            if (!ok || column < 0 || column >= columns.size())
+                continue;
+
+            const QString value = columns.at(column);
+            if (key == QStringLiteral("name"))
+                name = displayText(value);
+            else if (key == QStringLiteral("icon"))
+                icon = value;
+            else
+                description = displayText(value);
         }
     }
 
-    return item;
+    return new AppItem(name, line, icon, description);
 }
 
 QString Providers::getDisplayName(const QString &value, const QString &displayColumns)
 {
-    if (displayColumns.isEmpty())
+    if (displayColumns.trimmed().isEmpty())
         return value;
 
-    const QStringList columns = value.split('\t');
+    const QStringList columns = value.split(QChar('\t'), Qt::KeepEmptyParts);
     QStringList result;
+
     for (const QString &idxStr : displayColumns.split(',')) {
         bool ok = false;
-        const int idx = idxStr.trimmed().toInt(&ok) - 1;
-        if (ok && idx >= 0 && idx < columns.size())
-            result << columns.at(idx);
+        const int index = idxStr.trimmed().toInt(&ok) - 1;
+        if (ok && index >= 0 && index < columns.size())
+            result << columns.at(index);
     }
-    return result.join('\t');
+
+    return result.join(QChar('\t'));
 }

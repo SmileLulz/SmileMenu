@@ -56,6 +56,11 @@ qt_add_executable(smilemenu
     smilemenu/launcher.h
 )
 
+target_compile_definitions(smilemenu
+    PRIVATE
+        SMILEMENU_VERSION="${PROJECT_VERSION}"
+)
+
 target_include_directories(smilemenu
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/smilemenu
