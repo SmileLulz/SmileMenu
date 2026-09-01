@@ -34,21 +34,21 @@
 
 ### Arch Linux
 
-```sh
-sudo pacman -S --needed qt6-base qt6-declarative layer-shell-qt
-```
+- `qt6-base`
+- `qt6-declarative`
+- `layer-shell-qt`
 
 ### Debian
 
-```sh
-sudo apt install qt6-base-dev qt6-declarative-dev layer-shell-qt
-```
+- `qt6-base-dev`
+- `qt6-declarative-dev`
+- `layer-shell-qt`
 
 ### Fedora
 
-```sh
-sudo dnf install qt6-qtbase qt6-qtdeclarative layer-shell-qt
-```
+- `qt6-qtbase`
+- `qt6-qtdeclarative`
+- `layer-shell-qt`
 
 <br></br>
 
