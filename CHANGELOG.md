@@ -1,5 +1,10 @@
 # Changelogs
 
+### v4.4
+
+- Fixed debian build support
+- Fixed rounded corners not clipping
+
 ### v4.3
 
 - Fixed provider system bugs

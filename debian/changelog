@@ -1,3 +1,10 @@
+smilemenu (4.4-1) unstable; urgency=medium
+
+  * Fixed debian build support
+  * Fixed rounded corners not clipping
+
+ -- SmileLulz <SmileLulz@users.noreply.github.com>  Tue, 01 Sep 2026 21:32:36 +0530
+
 smilemenu (4.3-1) unstable; urgency=medium
 
   * Fixed provider system bugs

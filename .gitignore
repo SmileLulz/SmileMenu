@@ -1,4 +1,6 @@
-# Custom
+# Customs
+obj-*-linux-gnu
+debian/smilemenu
 
 # ---> Python
 # Byte-compiled / optimized / DLL files

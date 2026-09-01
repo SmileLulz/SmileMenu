@@ -1,5 +1,5 @@
 Name:           smilemenu
-Version:        4.3
+Version:        4.4
 Release:        1%{?dist}
 Summary:        A fast and lightweight application launcher and utility menu
 
@@ -43,8 +43,6 @@ install -Dpm0644 data/metainfo/io.github.SmileLulz.SmileMenu.metainfo.xml \
 %{_metainfodir}/io.github.SmileLulz.SmileMenu.metainfo.xml
 
 %changelog
-* Tue Sep 01 2026 SmileLulz - 4.3-1
-- Fixed provider system bugs
-- Added `--version, -v`
-- Added short forms for every options/args
-- Fixed icon preview style
+* Tue Sep 01 2026 SmileLulz - 4.4-1
+- Fixed debian build support
+- Fixed rounded corners not clipping

@@ -16,7 +16,8 @@ Architecture: any
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
- layer-shell-qt
+ layer-shell-qt,
+ qml6-module-org-kde-layershell
 Description: A fast and lightweight application launcher and utility menu.
  SmileMenu is a lightweight app launcher and utility menu for Wayland desktops.
  It's highly themable, supports custom scripting, and much more.
