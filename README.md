@@ -3,7 +3,7 @@
   <h3>A fast and lightweight application launcher and utility menu</h3>
   <p>SmileMenu is a lightweight app launcher and utility menu for Wayland desktops. It's highly themable, supports custom scripting, and much more.</p>
   <br></br>
-  <img alt="Screenshot" src="https://raw.githubusercontent.com/SmileLulz/SmileMenu/refs/heads/main/Screenshots/0.png" width="80%" />
+  <img alt="Screenshot" src="https://raw.githubusercontent.com/SmileLulz/SmileMenu/refs/heads/main/0-Screenshots/0.png" width="80%" />
   <br></br>
   <h3><a href="https://github.com/SmileLulz/SmileMPlayer/blob/main/WIKI.md">Wiki</a>  &ensp;&ensp;  <a href="https://github.com/SmileLulz/SmileMPlayer/blob/main/CHANGELOG.md">Changelogs</a></h2>
 </div>

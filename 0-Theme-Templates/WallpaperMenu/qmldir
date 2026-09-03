@@ -1,0 +1,7 @@
+module SmileMenuGridTheme
+singleton Api 1.0 Api.qml
+singleton Theme 1.0 Theme.qml
+Main 1.0 Main.qml
+SearchField 1.0 SearchField.qml
+ItemList 1.0 ItemList.qml
+MenuItem 1.0 MenuItem.qml
