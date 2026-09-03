@@ -1,5 +1,9 @@
 # Changelogs
 
+### v4.7
+
+- Fixed `Theme.qml` not added in the `qmldir`
+
 ### v4.6
 
 - Fixed frontend issues

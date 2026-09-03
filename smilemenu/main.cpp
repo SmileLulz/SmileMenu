@@ -277,6 +277,7 @@ int main(int argc, char *argv[])
         const QByteArray qmldirContent =
             "module SmileMenuTheme\n"
             "singleton Api 1.0 Api.qml\n"
+            "singleton Theme 1.0 Theme.qml\n"
             "Main 1.0 Main.qml\n"
             "SearchField 1.0 SearchField.qml\n"
             "ItemList 1.0 ItemList.qml\n"
