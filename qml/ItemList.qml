@@ -1,5 +1,4 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
 import QtQuick.Effects
 import "."
@@ -9,37 +8,33 @@ Item {
 
     required property var model
     property bool cycle: false
-    property real itemSpacing: 0
-    property real itemContainerRadius: 28
-    property color itemColor: "transparent"
-    property color itemHoverColor: "#484459"
-    property color itemContainerColor: "#312e41"
-    property int itemHeight: 50
-    property int itemHeightDescription: 65
-    property color textColor: "#e5e1e9"
-    property color textColorSecondary: "#c9c5d0"
-    property int fontSize: 16
-    property int fontSizeSecondary: 12
-    property bool fontBold: false
     property int hoveredIndex: -1
     property alias currentIndex: list.currentIndex
 
     signal activated(string command)
 
-    function moveSelection(delta) {
-        if (list.count <= 0)
-            return
+    property real itemSpacing: Theme.sizes.itemSpacing
+    property real itemContainerRadius: Theme.sizes.itemContainerRadius
+    property color itemColor: "transparent"
+    property color itemHoverColor: Theme.colors.hover
+    property color itemContainerColor: Theme.colors.surface
+    property int itemHeight: Theme.sizes.itemHeight
+    property int itemHeightDescription: Theme.sizes.itemHeightDescription
+    property color textColor: Theme.colors.text
+    property color textColorSecondary: Theme.colors.textSecondary
+    property int fontSize: Theme.sizes.fontSize
+    property int fontSizeSecondary: Theme.sizes.fontSizeSecondary
+    property bool fontBold: Theme.sizes.fontBold
 
+    function moveSelection(delta) {
+        if (list.count <= 0) return
         var next = list.currentIndex + delta
         if (root.cycle) {
-            if (next < 0)
-                next = list.count - 1
-            else if (next >= list.count)
-                next = 0
+            if (next < 0) next = list.count - 1
+            else if (next >= list.count) next = 0
         } else {
             next = Math.max(0, Math.min(list.count - 1, next))
         }
-
         list.currentIndex = next
         list.positionViewAtIndex(next, ListView.Contain)
     }
@@ -71,9 +66,8 @@ Item {
         highlightRangeMode: ListView.ApplyRange
         preferredHighlightBegin: 0
         preferredHighlightEnd: height
-        
-        layer.enabled: true
 
+        layer.enabled: true
         layer.effect: MultiEffect {
             maskEnabled: true
             maskSource: itemContainerMask

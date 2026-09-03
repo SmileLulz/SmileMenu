@@ -5,6 +5,8 @@ import QtQuick.Layouts
 RowLayout {
     id: root
 
+    readonly property alias field: search
+
     required property bool showTextField
     required property bool showEntryPrompt
     required property string promptText

@@ -42,7 +42,6 @@ Rectangle {
 
     Row {
         spacing: 12
-
         anchors {
             fill: parent
             leftMargin: 12
@@ -51,7 +50,6 @@ Rectangle {
 
         Image {
             id: appIcon
-
             source: modelData.icon ? "image://icons/" + modelData.icon : ""
             width: 32
             height: 32

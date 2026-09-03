@@ -1,5 +1,10 @@
 # Changelogs
 
+### v4.6
+
+- Fixed frontend issues
+- Added `Theme.qml` to make the theming easy (coloring and sizing only)
+
 ### v4.5
 
 - Fixed persistent LayerShell activation from the daemon workspace affecting application launches

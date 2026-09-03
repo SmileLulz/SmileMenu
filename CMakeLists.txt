@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(SmileMenu
-    VERSION 4.5
+    VERSION 4.6
     LANGUAGES CXX
 )
 
@@ -28,7 +28,9 @@ find_package(LayerShellQt REQUIRED)
 qt_standard_project_setup(REQUIRES 6.5)
 qt_policy(SET QTP0004 NEW)
 
-set_source_files_properties(qml/Api.qml
+set_source_files_properties(
+    qml/Api.qml
+    qml/Theme.qml
     PROPERTIES
         QT_QML_SINGLETON_TYPE TRUE
 )
@@ -86,6 +88,7 @@ qt6_add_qml_module(smilemenu
     VERSION 1.0
     QML_FILES
         qml/Api.qml
+        qml/Theme.qml
         qml/ItemList.qml
         qml/Main.qml
         qml/MenuItem.qml

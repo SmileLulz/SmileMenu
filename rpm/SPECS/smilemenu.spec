@@ -1,5 +1,5 @@
 Name:           smilemenu
-Version:        4.5
+Version:        4.6
 Release:        1%{?dist}
 Summary:        A fast and lightweight application launcher and utility menu
 
@@ -43,10 +43,6 @@ install -Dpm0644 data/metainfo/io.github.SmileLulz.SmileMenu.metainfo.xml \
 %{_metainfodir}/io.github.SmileLulz.SmileMenu.metainfo.xml
 
 %changelog
-* Wed Sep 02 2026 SmileLulz - 4.5-1
-- Fixed persistent LayerShell activation from the daemon workspace affecting application launches
-- Split the QML files into modules
-- `--gen-theme` now extracts all the default QML theme files
-- Added optional cyclic keyboard navigation with `cycle: false` by default in config
-- Replaced provider `path` field mode with explicit `file` mode
-- Provider `file` fields now fall back to an empty value for non-file output
+* Thu Sep 03 2026 SmileLulz - 4.6-1
+- Fixed frontend issues
+- Added `Theme.qml` to make the theming easy (coloring and sizing only)

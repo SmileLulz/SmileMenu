@@ -1,8 +1,6 @@
 import QtQuick
-// import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Window
-// import QtQuick.Effects
 import org.kde.layershell as LayerShellQt
 import "."
 
@@ -11,33 +9,31 @@ Window {
 
     property bool closing: false
 
-    property real window_radius: 40
-    property color background_color: "#1c192b"
+    property real window_radius: Theme.sizes.windowRadius
+    property color background_color: Theme.colors.background
 
-    property real item_spacing: 0
-    property real item_container_radius: 28
-    property real item_radius_high: 28
-    property real item_radius_low: 0
+    property real item_spacing: Theme.sizes.itemSpacing
+    property real item_container_radius: Theme.sizes.itemContainerRadius
     property color item_color: "transparent"
-    property color item_hover_color: "#484459"
-    property color item_container_color: "#312e41"
-    property int item_height: 50
-    property int item_height_description: 65
+    property color item_hover_color: Theme.colors.hover
+    property color item_container_color: Theme.colors.surface
+    property int item_height: Theme.sizes.itemHeight
+    property int item_height_description: Theme.sizes.itemHeightDescription
 
-    property int content_margins: 28
-    property int content_spacing: 14
+    property int content_margins: Theme.sizes.contentMargins
+    property int content_spacing: Theme.sizes.contentSpacing
 
-    property color text_color: "#e5e1e9"
-    property color text_color_secondary: "#c9c5d0"
-    property int font_size: 16
-    property int font_size_secondary: 12
-    property bool font_bold: false
+    property color text_color: Theme.colors.text
+    property color text_color_secondary: Theme.colors.textSecondary
+    property int font_size: Theme.sizes.fontSize
+    property int font_size_secondary: Theme.sizes.fontSizeSecondary
+    property bool font_bold: Theme.sizes.fontBold
 
-    property color text_field_placeholder_color: "#938f99"
-    property color text_field_color: "transparent"
-    property color text_field_border_color: "transparent"
-    property real text_field_border_width: 0
-    property real text_field_radius: 0
+    property color text_field_placeholder_color: Theme.colors.placeholder
+    property color text_field_color: Theme.colors.fieldBackground
+    property color text_field_border_color: Theme.colors.fieldBorder
+    property real text_field_border_width: Theme.sizes.fieldBorderWidth
+    property real text_field_radius: Theme.sizes.fieldRadius
 
     visible: true
     color: "transparent"
@@ -170,14 +166,12 @@ Window {
                         ? Math.min(Math.max(effectiveMin, count), Api.maxVisibleItems)
                         : effectiveMin
                     var total = 0
-
                     for (var i = 0; i < visibleItems; ++i) {
                         var app = i < count ? Api.apps[i] : null
                         total += (app && app.description)
                             ? root.item_height_description
                             : root.item_height
                     }
-
                     return total + Math.max(0, visibleItems - 1) * root.item_spacing
                 }
 
@@ -186,18 +180,6 @@ Window {
                     anchors.fill: parent
                     model: Api.apps
                     cycle: Api.cycle
-                    itemSpacing: root.item_spacing
-                    itemContainerRadius: root.item_container_radius
-                    itemColor: root.item_color
-                    itemHoverColor: root.item_hover_color
-                    itemContainerColor: root.item_container_color
-                    itemHeight: root.item_height
-                    itemHeightDescription: root.item_height_description
-                    textColor: root.text_color
-                    textColorSecondary: root.text_color_secondary
-                    fontSize: root.font_size
-                    fontSizeSecondary: root.font_size_secondary
-                    fontBold: root.font_bold
                     onActivated: function(command) {
                         Api.launch(command)
                         root.closeAnimated()
@@ -219,12 +201,6 @@ Window {
             container.opacity = 1
             container.scale = 1
         }
-
-        Qt.callLater(function() {
-            keyboardFocus.forceActiveFocus()
-            if (Api.showTextField)
-                searchField.forceActiveFocus()
-        })
     }
 
     onVisibleChanged: {
@@ -233,11 +209,10 @@ Window {
             menu.currentIndex = 0
             menu.hoveredIndex = -1
         }
-
         if (visible) {
             keyboardFocus.forceActiveFocus()
             if (Api.showTextField)
-                searchField.forceActiveFocus()
+                searchField.field.forceActiveFocus()
         }
     }
 
@@ -274,8 +249,7 @@ Window {
     }
 
     function closeAnimated() {
-        if (closing)
-            return
+        if (closing) return
         closing = true
         closeAnimation.start()
     }

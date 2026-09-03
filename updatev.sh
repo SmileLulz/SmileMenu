@@ -13,7 +13,7 @@ ARCH_MAINTAINER="SmileLulz <SmileLulz@users.noreply.github.com>"
 DEBIAN_MAINTAINER="SmileLulz <SmileLulz@users.noreply.github.com>"
 RPM_MAINTAINER="SmileLulz"
 
-DEBIAN_DISTRIBUTION="unstable" # bookworm or unstable
+DEBIAN_DISTRIBUTION="bookworm" # bookworm or unstable
 
 RED=$'\033[0;31m'
 GREEN=$'\033[0;32m'

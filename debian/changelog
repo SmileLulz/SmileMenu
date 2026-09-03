@@ -1,3 +1,10 @@
+smilemenu (4.6-1) bookworm; urgency=medium
+
+  * Fixed frontend issues
+  * Added `Theme.qml` to make the theming easy (coloring and sizing only)
+
+ -- SmileLulz <SmileLulz@users.noreply.github.com>  Thu, 03 Sep 2026 22:18:59 +0530
+
 smilemenu (4.5-1) unstable; urgency=medium
 
   * Fixed persistent LayerShell activation from the daemon workspace affecting application launches
