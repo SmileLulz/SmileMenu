@@ -101,7 +101,7 @@ bash install.sh
 ### Clone the repository
 
 ```sh
-git clone https://github.com/SmileLulz/SmileMPlayer.git && cd SmileMPlayer
+git clone https://github.com/SmileLulz/SmileMenu.git && cd SmileMenu
 ```
 
 ### Running for testing/debugging
